@@ -19,16 +19,19 @@ import Settings from "./models/Settings";
 import MainTabsComponent from "./components/MainTabsComponent";
 
 export default function App() {
-  // Set up global state for settings
+  // Set up global state for settings and contacts
   const [settings, setSettings] = React.useState(new Settings());
+  const [contacts, setContacts] = React.useState([]); // move contacts state here
 
-   /**
-    * Refactored this code to put all components underneath a global state provider to manage all the application state.
-    * This allows for easier management of settings and user data across the application.
-    * The settings state is initialized with a new Settings object, which can be modified by the user.
-    */
+  /**
+   * Refactored this code to put all components underneath a global state provider to manage all the application state.
+   * This allows for easier management of settings and user data across the application.
+   * The settings state is initialized with a new Settings object, which can be modified by the user.
+   */
   return (
-    <GlobalStateProvider value={{ settings, setSettings }}>
+    <GlobalStateProvider
+      value={{ settings, setSettings, contacts, setContacts }}
+    >
       <NavigationContainer>
         <MainTabsComponent />
       </NavigationContainer>
