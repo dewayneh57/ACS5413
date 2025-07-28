@@ -2,24 +2,29 @@ import { formatPhoneNumber } from "../utils/FormatUtils";
 
 // Model for Contacts
 export default class Contact {
-  constructor({
-    id,
-    firstName = "",
-    middleName = "",
-    lastName = "",
-    homePhone = "",
-    workPhone = "",
-    cellPhone = "",
-    street1 = "",
-    street2 = "",
-    city = "",
-    state = "",
-    zip = "",
-    email = "",
-    notes = "",
-    relationship = "",
-  }) {
+  constructor(props = {}) {
+    const {
+      id,
+      firstName = "",
+      middleName = "",
+      lastName = "",
+      homePhone = "",
+      workPhone = "",
+      cellPhone = "",
+      street1 = "",
+      street2 = "",
+      city = "",
+      state = "",
+      zip = "",
+      email = "",
+      notes = "",
+      relationship = "",
+    } = props;
+
     this.id = id;
+    this.firstName = firstName;
+    this.middleName = middleName;
+    this.lastName = lastName;
     this.firstName = firstName;
     this.middleName = middleName;
     this.lastName = lastName;

@@ -2,39 +2,67 @@
  * ACS5413 Assignment 5 - Form Input
  * Dewayne Hafenstein - HAFE0010
  *
- * This project extends the previous assignment by adding a Form Input
- * component that allows users to enter and submit their health information.
+ * This project extends the previous assignment by adding form input to the contacts screen.  The other
+ * screens will have similar capabilities added in the future.  For now, the contacts screen constitutes
+ * the submission for this assignment.
  *
- * This application is the forerunner to my final project for this
- * course, which will be a full-featured personal health record
- * management application.  It will enable a user to record their
- * medical information, contacts, documentation, and more.  It will
- * also track their medication and provide reminders when to take
- * doses and when to refill prescriptions.
+ * This application is the forerunner to my final project for this course, which will be a full-featured
+ * personal health record management application.  It will enable a user to record their medical
+ * information, contacts, documentation, and more.  It will also track their medication and provide
+ * reminders when to take doses and when to refill prescriptions.
  */
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { useWindowDimensions } from "react-native";
 import { GlobalStateProvider } from "./context/GlobalStateContext";
 import Settings from "./models/Settings";
 import MainTabsComponent from "./components/MainTabsComponent";
 
-export default function App() {
-  // Set up global state for settings and contacts
-  const [settings, setSettings] = React.useState(new Settings());
-  const [contacts, setContacts] = React.useState([]); // move contacts state here
+function OrientationProvider({ children }) {
+  const { width, height } = useWindowDimensions();
+  const orientation = width < height ? "portrait" : "landscape";
+  console.log("Orientation:", orientation);
+  return children(orientation);
+}
 
-  /**
-   * Refactored this code to put all components underneath a global state provider to manage all the application state.
-   * This allows for easier management of settings and user data across the application.
-   * The settings state is initialized with a new Settings object, which can be modified by the user.
-   */
+export default function App() {
+  const [settings, setSettings] = React.useState(new Settings());
+  const [contacts, setContacts] = React.useState([]);
+  const [doctors, setDoctors] = React.useState([]);
+  const [hospitals, setHospitals] = React.useState([]);
+  const [pharmacies, setPharmacies] = React.useState([]);
+  const [medications, setMedications] = React.useState([]);
+  const [insurance, setInsurance] = React.useState([]);
+  const [allergies, setAllergies] = React.useState([]);
+
   return (
     <GlobalStateProvider
-      value={{ settings, setSettings, contacts, setContacts }}
+      value={{
+        settings,
+        setSettings,
+        contacts,
+        setContacts,
+        doctors,
+        setDoctors,
+        hospitals,
+        setHospitals,
+        pharmacies,
+        setPharmacies,
+        medications,
+        setMedications,
+        insurance,
+        setInsurance,
+        allergies,
+        setAllergies,
+      }}
     >
-      <NavigationContainer>
-        <MainTabsComponent />
-      </NavigationContainer>
+      <OrientationProvider>
+        {(orientation) => (
+          <NavigationContainer>
+            <MainTabsComponent orientation={orientation} />
+          </NavigationContainer>
+        )}
+      </OrientationProvider>
     </GlobalStateProvider>
   );
 }

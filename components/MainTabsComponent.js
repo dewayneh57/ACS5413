@@ -6,7 +6,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
 
-export default function MainTabsComponent() {
+export default function MainTabsComponent({ orientation }) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -34,7 +34,7 @@ export default function MainTabsComponent() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeStack}
+        children={(props) => <HomeStack {...props} orientation={orientation} />}
         options={{ headerShown: false }}
       />
       <Tab.Screen name="Settings" component={SettingsScreen} />

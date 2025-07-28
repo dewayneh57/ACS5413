@@ -1,50 +1,51 @@
-import React, { useState } from "react";
+/**
+ * ACS5413 - Form Input
+ * Dewayne Hafenstein - HAFE0010
+ *
+ * This screen displays a list of contacts, allowing the user to add, edit, and delete contacts.
+ * It uses a SectionList to group contacts by the first letter of their last name. This paradigm
+ * is relatively common in contact management applications, as it allows for easier navigation
+ * and organization of contacts.
+ */
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  SectionList,
+  FlatList,
   TouchableOpacity,
   Alert,
   SafeAreaView,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useGlobalState } from "../context/GlobalStateContext";
 import ContactForm from "../forms/ContactForm";
 import Contact from "../models/Contact";
 
-function groupContacts(contacts) {
-  // Group contacts by first letter of name
-  if (!Array.isArray(contacts) || contacts.length === 0) return [];
-  const groups = {};
-  contacts.forEach((contact) => {
-    let name =
-      typeof contact.getFullName === "function"
-        ? contact.getFullName()
-        : contact.name || "";
-    // If name is empty, try to build from firstName/lastName
-    if (!name && contact) {
-      name = `${contact.firstName || ""} ${contact.lastName || ""}`.trim();
-    }
-    const letter = name[0]?.toUpperCase() || "?";
-    if (!groups[letter]) groups[letter] = [];
-    groups[letter].push({ ...contact, name });
-  });
-  // Convert to SectionList format
-  return Object.keys(groups)
-    .sort()
-    .map((letter) => ({
-      title: letter,
-      data: groups[letter].sort((a, b) =>
-        (a.name || "").localeCompare(b.name || "")
-      ),
-    }));
-}
-
+/**
+ *
+ * @returns The ContactsScreen component, which displays a list of contacts.
+ * It allows the user to add, edit, and delete contacts using a modal form.
+ */
 export default function ContactsScreen() {
   const { contacts, setContacts } = useGlobalState();
   const [formVisible, setFormVisible] = React.useState(false);
   const [editingContact, setEditingContact] = React.useState(null);
+  const [windowWidth, setWindowWidth] = useState(
+    Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    const onChange = ({ window }) => setWindowWidth(window.width);
+    const sub = Dimensions.addEventListener("change", onChange);
+    return () => {
+      if (sub?.remove) sub.remove();
+      else Dimensions.removeEventListener("change", onChange);
+    };
+  }, []);
+  const isPortrait = windowWidth < 500;
+  const numColumns = isPortrait ? 2 : 4;
 
   const handleAddContact = () => {
     setEditingContact(null);
@@ -86,6 +87,13 @@ export default function ContactsScreen() {
     setEditingContact(null);
   };
 
+  // Sort contacts alphabetically by last name, fallback to first name
+  const sortedContacts = [...contacts].sort((a, b) => {
+    const aName = a.lastName || a.firstName || "";
+    const bName = b.lastName || b.firstName || "";
+    return aName.localeCompare(bName);
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
@@ -94,19 +102,15 @@ export default function ContactsScreen() {
           <Ionicons name="add-circle" size={48} color="#007AFF" />
         </TouchableOpacity>
       </View>
-      <SectionList
-        sections={groupContacts(contacts)}
+      <FlatList
+        data={sortedContacts}
         keyExtractor={(item) => item.id}
-        renderSectionHeader={({ section: { title } }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>{title}</Text>
-          </View>
-        )}
+        numColumns={numColumns}
         renderItem={({ item }) => {
           const contact = item instanceof Contact ? item : new Contact(item);
           return (
             <TouchableOpacity
-              style={styles.contactRow}
+              style={[styles.contactRow, { flex: 1 / numColumns }]}
               onPress={() => handleEditContact(item)}
             >
               <View style={{ flex: 1 }}>
@@ -121,6 +125,7 @@ export default function ContactsScreen() {
         ListEmptyComponent={
           <Text style={styles.emptyText}>No contacts found.</Text>
         }
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
       <ContactForm
         visible={formVisible}
@@ -137,7 +142,7 @@ export default function ContactsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#ffffff" },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -146,12 +151,6 @@ const styles = StyleSheet.create({
   },
   header: { fontSize: 28, fontWeight: "bold" },
   addBtn: { marginLeft: 12 },
-  sectionHeader: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 4,
-    paddingHorizontal: 16,
-  },
-  sectionHeaderText: { fontSize: 18, fontWeight: "bold", color: "#007AFF" },
   contactRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#eeeeee",
   },
   contactName: { fontSize: 18, fontWeight: "500" },
   contactPhone: { fontSize: 16, color: "#888" },
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: "center",
     marginTop: 32,
-    color: "#888",
+    color: "#888888",
     fontSize: 16,
   },
 });

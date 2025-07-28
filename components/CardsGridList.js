@@ -23,12 +23,6 @@ const cards = [
     screen: "Doctors",
   },
   {
-    id: "3",
-    label: "Family",
-    icon: require("../assets/icons/family.png"),
-    screen: "Family",
-  },
-  {
     id: "4",
     label: "History",
     icon: require("../assets/icons/history.png"),
@@ -59,12 +53,6 @@ const cards = [
     screen: "Insurance",
   },
   {
-    id: "9",
-    label: "Documents",
-    icon: require("../assets/icons/documents.png"),
-    screen: "Documents",
-  },
-  {
     id: "10",
     label: "Allergies",
     icon: require("../assets/icons/allergy.png"),
@@ -72,7 +60,9 @@ const cards = [
   },
 ];
 
-export default function CardsGridList({ navigation, viewStyle }) {
+export default function CardsGridList({ navigation, viewStyle, orientation }) {
+  const numColumns =
+    viewStyle === "list" ? 1 : orientation === "landscape" ? 4 : 2;
   const renderItem = ({ item }) => {
     if (viewStyle === "list") {
       return (
@@ -88,12 +78,22 @@ export default function CardsGridList({ navigation, viewStyle }) {
         </View>
       );
     }
+    // Portrait: icon above label; Landscape: icon left, label right, less height
     return (
       <View style={styles.gridContent}>
         <TouchableOpacity onPress={() => navigation.navigate(item.screen)}>
           <Card>
-            <Image source={item.icon} style={styles.cardImage} />
-            <Text style={styles.cardImageLabel}>{item.label}</Text>
+            {orientation === "landscape" ? (
+              <View style={styles.landscapeCardContent}>
+                <Image source={item.icon} style={styles.landscapeCardImage} />
+                <Text style={styles.landscapeCardLabel}>{item.label}</Text>
+              </View>
+            ) : (
+              <>
+                <Image source={item.icon} style={styles.cardImage} />
+                <Text style={styles.cardImageLabel}>{item.label}</Text>
+              </>
+            )}
           </Card>
         </TouchableOpacity>
       </View>
@@ -105,8 +105,8 @@ export default function CardsGridList({ navigation, viewStyle }) {
       data={cards}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
-      numColumns={viewStyle === "list" ? 1 : 2}
-      key={viewStyle} // This forces FlatList to re-render when viewStyle changes
+      numColumns={numColumns}
+      key={viewStyle + numColumns}
       contentContainerStyle={
         viewStyle === "list" ? styles.listContainer : styles.container
       }
@@ -118,12 +118,15 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "blue",
     width: "100%",
-    height: "100%",
+    flexGrow: 1, // Allow FlatList to fill vertical space
+    justifyContent: "center", // Center cards vertically if not enough to fill
+    paddingBottom: 24, // Add some bottom padding for scroll
   },
   gridContent: {
     flex: 1,
     margin: 0,
     padding: 0,
+    maxWidth: "130%", // Make cards even wider in landscape
   },
   cardImage: {
     width: 48,
@@ -134,6 +137,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
+  },
+  landscapeCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    height: 64, // 25% less than 84 (from Card.js landscape height)
+    paddingHorizontal: 0, // Remove horizontal padding
+    width: "100%", // Make the card content fill the card width
+  },
+  landscapeCardImage: {
+    width: 48,
+    height: 48,
+    marginRight: 16,
+    marginLeft: 0, // Ensure icon is at far left
+  },
+  landscapeCardLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "left",
   },
   listContainer: {
     paddingVertical: 8,
@@ -157,5 +179,24 @@ const styles = StyleSheet.create({
   listLabel: {
     fontSize: 18,
     fontWeight: "600",
+  },
+  landscapeCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    height: 64, // 25% less than 84 (from Card.js landscape height)
+    paddingHorizontal: 0, // Remove horizontal padding
+    width: "100%", // Make the card content fill the card width
+  },
+  landscapeCardImage: {
+    width: 48,
+    height: 48,
+    marginRight: 16,
+    marginLeft: 0, // Ensure icon is at far left
+  },
+  landscapeCardLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "left",
   },
 });

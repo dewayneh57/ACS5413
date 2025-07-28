@@ -1,19 +1,138 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+} from "react-native";
+import { useGlobalState } from "../context/GlobalStateContext";
+import InsuranceForm from "../forms/InsuranceForm";
+import Insurance from "../models/Insurance";
 
 export default function InsuranceScreen() {
+  const { insurance, setInsurance } = useGlobalState();
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [editingInsurance, setEditingInsurance] = useState(null);
+
+  // Ensure insurance is always an array to prevent map errors
+  const insuranceList = insurance || [];
+
+  const handleAddInsurance = () => {
+    setEditingInsurance(null);
+    setIsFormVisible(true);
+  };
+
+  const handleEditInsurance = (insuranceItem) => {
+    setEditingInsurance(insuranceItem);
+    setIsFormVisible(true);
+  };
+
+  const handleSaveInsurance = (insuranceData) => {
+    let updatedInsurance;
+
+    if (editingInsurance) {
+      // Update existing insurance
+      updatedInsurance = insuranceList.map((ins) =>
+        ins.id === editingInsurance.id
+          ? new Insurance({ ...insuranceData, id: editingInsurance.id })
+          : ins
+      );
+    } else {
+      // Add new insurance
+      const newInsurance = new Insurance(insuranceData);
+      updatedInsurance = [...insuranceList, newInsurance];
+    }
+
+    setInsurance(updatedInsurance);
+    setIsFormVisible(false);
+    setEditingInsurance(null);
+  };
+
+  const handleDeleteInsurance = (insuranceToDelete) => {
+    const updatedInsurance = insuranceList.filter(
+      (ins) => ins.id !== insuranceToDelete.id
+    );
+    setInsurance(updatedInsurance);
+    setIsFormVisible(false);
+    setEditingInsurance(null);
+  };
+
+  const renderPhoneNumbers = (insuranceItem) => {
+    const phones = insuranceItem.getAllPhoneNumbers() || [];
+    return phones.slice(0, 3).map((phone, index) => (
+      <Text key={index} style={styles.phoneNumber}>
+        {phone.type}: {phone.number}
+      </Text>
+    ));
+  };
+
+  const renderInsuranceItem = ({ item }) => {
+    // Safety check to ensure item is valid
+    if (!item) return null;
+
+    return (
+      <TouchableOpacity
+        style={styles.insuranceItem}
+        onPress={() => handleEditInsurance(item)}
+      >
+        <View style={styles.insuranceHeader}>
+          <Text style={styles.providerName}>{item.getDisplayName()}</Text>
+          <Text style={styles.policyInfo}>{item.getPolicyInfo()}</Text>
+        </View>
+
+        {item.agentName && (
+          <Text style={styles.agentInfo}>Agent: {item.agentName}</Text>
+        )}
+
+        {item.getAgentFullAddress() && (
+          <Text style={styles.address}>{item.getAgentFullAddress()}</Text>
+        )}
+
+        <View style={styles.phoneContainer}>{renderPhoneNumbers(item)}</View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Insurance Page</Text>
-      <Text style={styles.instructions}>
-        On this screen, users can manage their insurance information, including
-        policy details, coverage options, and contact information for their
-        insurance provider. 
-        {"\n\n"}
-        This helps ensure that users have easy access to
-        their insurance details when needed, such as during medical appointments
-        or emergencies.
-      </Text>
+      <StatusBar barStyle="light-content" />
+
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Insurance</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddInsurance}>
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+
+      {insuranceList.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No insurance policies recorded</Text>
+          <Text style={styles.emptySubtext}>
+            Tap the + button to add your first insurance policy
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={insuranceList}
+          renderItem={renderInsuranceItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      <InsuranceForm
+        visible={isFormVisible}
+        onClose={() => {
+          setIsFormVisible(false);
+          setEditingInsurance(null);
+        }}
+        onSave={handleSaveInsurance}
+        onDelete={editingInsurance ? handleDeleteInsurance : null}
+        initialValues={editingInsurance}
+      />
     </View>
   );
 }
@@ -21,17 +140,103 @@ export default function InsuranceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
   },
-  text: {
+  header: {
+    backgroundColor: "#007AFF",
+    paddingTop: StatusBar.currentHeight || 44,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerTitle: {
+    color: "#fff",
     fontSize: 24,
     fontWeight: "bold",
   },
-  instructions: {
-    margin: 12,
+  addButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "300",
+  },
+  listContainer: {
+    padding: 16,
+  },
+  insuranceItem: {
+    backgroundColor: "#fff",
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  insuranceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  providerName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+    marginRight: 8,
+  },
+  policyInfo: {
+    fontSize: 12,
+    color: "#007AFF",
+    fontWeight: "500",
+  },
+  agentInfo: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+    fontWeight: "500",
+  },
+  address: {
+    fontSize: 12,
+    color: "#888",
+    marginBottom: 8,
+  },
+  phoneContainer: {
+    marginTop: 4,
+  },
+  phoneNumber: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 2,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtext: {
     fontSize: 16,
-    fontWeight: "normal",
+    color: "#999",
+    textAlign: "center",
+    lineHeight: 22,
   },
 });

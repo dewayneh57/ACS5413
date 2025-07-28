@@ -12,8 +12,7 @@ export default function HistoryScreen() {
         heart disease, and other relevant conditions, along with treatments and the 
         dates. 
          {"\n\n"}
-        This information can be crucial for medical professionals to understand the 
-        patient's background and potential risk factors.
+        For the purpose of the FormInput assignment, please see the Contacts screen.
       </Text>
     </View>
   );
