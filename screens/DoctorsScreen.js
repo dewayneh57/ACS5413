@@ -20,7 +20,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import DoctorForm from "../forms/DoctorForm";
 import Doctor from "../models/Doctor";
 import MapButton from "../components/MapButton";
@@ -31,7 +31,8 @@ import MapButton from "../components/MapButton";
  * It allows the user to add, edit, and delete doctors using a modal form.
  */
 export default function DoctorsScreen() {
-  const { doctors, setDoctors } = useGlobalState();
+  const { doctors, addDoctor, updateDoctor, deleteDoctor, isInitialized } =
+    useDatabase();
   const [formVisible, setFormVisible] = React.useState(false);
   const [editingDoctor, setEditingDoctor] = React.useState(null);
   const [windowWidth, setWindowWidth] = useState(
@@ -54,23 +55,17 @@ export default function DoctorsScreen() {
     setFormVisible(true);
   };
 
-  const handleSaveDoctor = (form) => {
+  const handleSaveDoctor = async (form) => {
     if (editingDoctor) {
       // Update existing doctor
-      setDoctors((prev) =>
-        prev.map((d) =>
-          d.id === editingDoctor.id
-            ? new Doctor({ ...d, ...form, id: editingDoctor.id })
-            : d
-        )
-      );
+      await updateDoctor(editingDoctor.id, form);
     } else {
       // Add new doctor
-      const newDoctor = new Doctor({
+      const newDoctor = {
         id: Date.now().toString(),
         ...form,
-      });
-      setDoctors((prev) => [...prev, newDoctor]);
+      };
+      await addDoctor(newDoctor);
     }
     setFormVisible(false);
     setEditingDoctor(null);
@@ -81,10 +76,8 @@ export default function DoctorsScreen() {
     setFormVisible(true);
   };
 
-  const handleDeleteDoctor = (form) => {
-    setDoctors((prev) =>
-      prev.filter((d) => d.id !== (form.id || editingDoctor.id))
-    );
+  const handleDeleteDoctor = async (form) => {
+    await deleteDoctor(form.id || editingDoctor.id);
     setFormVisible(false);
     setEditingDoctor(null);
   };
@@ -95,6 +88,23 @@ export default function DoctorsScreen() {
     const bName = b.lastName || b.firstName || "";
     return aName.localeCompare(bName);
   });
+
+  // Show loading state while database initializes
+  if (!isInitialized) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Doctors</Text>
+        </View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

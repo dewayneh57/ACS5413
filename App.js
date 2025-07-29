@@ -14,7 +14,7 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { useWindowDimensions } from "react-native";
-import { GlobalStateProvider } from "./context/GlobalStateContext";
+import { DatabaseProvider } from "./context/DatabaseContext";
 import Settings from "./models/Settings";
 import MainTabsComponent from "./components/MainTabsComponent";
 
@@ -27,7 +27,7 @@ function OrientationProvider({ children }) {
 
 export default function App() {
   return (
-    <GlobalStateProvider>
+    <DatabaseProvider>
       <OrientationProvider>
         {(orientation) => (
           <NavigationContainer>
@@ -35,6 +35,6 @@ export default function App() {
           </NavigationContainer>
         )}
       </OrientationProvider>
-    </GlobalStateProvider>
+    </DatabaseProvider>
   );
 }

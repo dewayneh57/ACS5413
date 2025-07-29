@@ -20,7 +20,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import ContactForm from "../forms/ContactForm";
 import Contact from "../models/Contact";
 
@@ -30,7 +30,8 @@ import Contact from "../models/Contact";
  * It allows the user to add, edit, and delete contacts using a modal form.
  */
 export default function ContactsScreen() {
-  const { contacts, setContacts } = useGlobalState();
+  const { contacts, addContact, updateContact, deleteContact, isInitialized } =
+    useDatabase();
   const [formVisible, setFormVisible] = React.useState(false);
   const [editingContact, setEditingContact] = React.useState(null);
   const [windowWidth, setWindowWidth] = useState(
@@ -53,23 +54,17 @@ export default function ContactsScreen() {
     setFormVisible(true);
   };
 
-  const handleSaveContact = (form) => {
+  const handleSaveContact = async (form) => {
     if (editingContact) {
       // Update existing contact
-      setContacts((prev) =>
-        prev.map((c) =>
-          c.id === editingContact.id
-            ? new Contact({ ...c, ...form, id: editingContact.id })
-            : c
-        )
-      );
+      await updateContact(editingContact.id, form);
     } else {
       // Add new contact
-      const newContact = new Contact({
+      const newContact = {
         id: Date.now().toString(),
         ...form,
-      });
-      setContacts((prev) => [...prev, newContact]);
+      };
+      await addContact(newContact);
     }
     setFormVisible(false);
     setEditingContact(null);
@@ -80,10 +75,8 @@ export default function ContactsScreen() {
     setFormVisible(true);
   };
 
-  const handleDeleteContact = (form) => {
-    setContacts((prev) =>
-      prev.filter((c) => c.id !== (form.id || editingContact.id))
-    );
+  const handleDeleteContact = async (form) => {
+    await deleteContact(form.id || editingContact.id);
     setFormVisible(false);
     setEditingContact(null);
   };
@@ -94,6 +87,23 @@ export default function ContactsScreen() {
     const bName = b.lastName || b.firstName || "";
     return aName.localeCompare(bName);
   });
+
+  // Show loading state while database initializes
+  if (!isInitialized) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Contacts</Text>
+        </View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

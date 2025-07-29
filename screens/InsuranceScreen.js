@@ -7,12 +7,13 @@ import {
   StyleSheet,
   StatusBar,
 } from "react-native";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import InsuranceForm from "../forms/InsuranceForm";
 import Insurance from "../models/Insurance";
 
 export default function InsuranceScreen() {
-  const { insurance, setInsurance } = useGlobalState();
+  const { insurance, isInitialized } = useDatabase();
+  // For now, we'll just display the data - full CRUD operations can be added later
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingInsurance, setEditingInsurance] = useState(null);
 

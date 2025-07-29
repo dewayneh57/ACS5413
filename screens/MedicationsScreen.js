@@ -7,12 +7,13 @@ import {
   StyleSheet,
   StatusBar,
 } from "react-native";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import MedicationForm from "../forms/MedicationForm";
 import Medication from "../models/Medication";
 
 export default function MedicationsScreen() {
-  const { medications, setMedications } = useGlobalState();
+  const { medications, isInitialized } = useDatabase();
+  // For now, we'll just display the data - full CRUD operations can be added later
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingMedication, setEditingMedication] = useState(null);
 

@@ -3,15 +3,17 @@
  * Dewayne Hafenstein - HAFE0010
  */
 import React from "react";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import CardsGridList from "../components/CardsGridList";
 
 export default function HomeScreen({ navigation, orientation }) {
-  const { settings } = useGlobalState();
+  // For now, use default settings until we add settings to database
+  const defaultSettings = { viewStyle: "cards" };
+
   return (
     <CardsGridList
       navigation={navigation}
-      viewStyle={settings.viewStyle}
+      viewStyle={defaultSettings.viewStyle}
       orientation={orientation}
     />
   );

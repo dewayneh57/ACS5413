@@ -7,12 +7,13 @@ import {
   StyleSheet,
   StatusBar,
 } from "react-native";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import MedicalHistoryForm from "../forms/MedicalHistoryForm";
 import { createMedicalHistoryItem } from "../models/MedicalHistory";
 
 export default function HistoryScreen() {
-  const { medicalHistory, setMedicalHistory } = useGlobalState();
+  const { medicalHistory, isInitialized } = useDatabase();
+  // For now, we'll just display the data - full CRUD operations can be added later
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState("all");

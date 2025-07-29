@@ -7,12 +7,13 @@ import {
   StyleSheet,
   StatusBar,
 } from "react-native";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import AllergyForm from "../forms/AllergyForm";
 import Allergy from "../models/Allergy";
 
 export default function AllergiesScreen() {
-  const { allergies, setAllergies } = useGlobalState();
+  const { allergies, addAllergy, updateAllergy, deleteAllergy, isInitialized } =
+    useDatabase();
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState(null);
 
@@ -29,37 +30,24 @@ export default function AllergiesScreen() {
     setIsFormVisible(true);
   };
 
-  const handleSaveAllergy = (allergyData) => {
-    let updatedAllergies;
-
+  const handleSaveAllergy = async (allergyData) => {
     if (editingAllergy) {
       // Update existing allergy
-      updatedAllergies = allergiesList.map((allergy) =>
-        allergy.id === editingAllergy.id
-          ? new Allergy({ ...allergyData, id: editingAllergy.id })
-          : allergy
-      );
+      await updateAllergy(editingAllergy.id, allergyData);
     } else {
       // Add new allergy
-      const newAllergy = new Allergy(allergyData);
-      updatedAllergies = [...allergiesList, newAllergy];
+      const newAllergy = {
+        id: Date.now().toString(),
+        ...allergyData,
+      };
+      await addAllergy(newAllergy);
     }
-
-    // Sort by severity level (most severe first)
-    updatedAllergies.sort(
-      (a, b) => b.getSeverityLevel() - a.getSeverityLevel()
-    );
-
-    setAllergies(updatedAllergies);
     setIsFormVisible(false);
     setEditingAllergy(null);
   };
 
-  const handleDeleteAllergy = (allergyToDelete) => {
-    const updatedAllergies = allergiesList.filter(
-      (allergy) => allergy.id !== allergyToDelete.id
-    );
-    setAllergies(updatedAllergies);
+  const handleDeleteAllergy = async (allergyToDelete) => {
+    await deleteAllergy(allergyToDelete.id);
     setIsFormVisible(false);
     setEditingAllergy(null);
   };
@@ -125,6 +113,23 @@ export default function AllergiesScreen() {
       )}
     </TouchableOpacity>
   );
+
+  // Show loading state while database initializes
+  if (!isInitialized) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Allergies</Text>
+        </View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

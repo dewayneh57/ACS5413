@@ -20,7 +20,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import PharmacyForm from "../forms/PharmacyForm";
 import Pharmacy from "../models/Pharmacy";
 import MapButton from "../components/MapButton";
@@ -31,7 +31,13 @@ import MapButton from "../components/MapButton";
  * It allows the user to add, edit, and delete pharmacies using a modal form.
  */
 export default function PharmacyScreen() {
-  const { pharmacies, setPharmacies } = useGlobalState();
+  const {
+    pharmacies,
+    addPharmacy,
+    updatePharmacy,
+    deletePharmacy,
+    isInitialized,
+  } = useDatabase();
   const [formVisible, setFormVisible] = React.useState(false);
   const [editingPharmacy, setEditingPharmacy] = React.useState(null);
   const [windowWidth, setWindowWidth] = useState(
@@ -54,23 +60,17 @@ export default function PharmacyScreen() {
     setFormVisible(true);
   };
 
-  const handleSavePharmacy = (form) => {
+  const handleSavePharmacy = async (form) => {
     if (editingPharmacy) {
       // Update existing pharmacy
-      setPharmacies((prev) =>
-        prev.map((p) =>
-          p.id === editingPharmacy.id
-            ? new Pharmacy({ ...p, ...form, id: editingPharmacy.id })
-            : p
-        )
-      );
+      await updatePharmacy(editingPharmacy.id, form);
     } else {
       // Add new pharmacy
-      const newPharmacy = new Pharmacy({
+      const newPharmacy = {
         id: Date.now().toString(),
         ...form,
-      });
-      setPharmacies((prev) => [...prev, newPharmacy]);
+      };
+      await addPharmacy(newPharmacy);
     }
     setFormVisible(false);
     setEditingPharmacy(null);
@@ -81,13 +81,28 @@ export default function PharmacyScreen() {
     setFormVisible(true);
   };
 
-  const handleDeletePharmacy = (form) => {
-    setPharmacies((prev) =>
-      prev.filter((p) => p.id !== (form.id || editingPharmacy.id))
-    );
+  const handleDeletePharmacy = async (form) => {
+    await deletePharmacy(form.id || editingPharmacy.id);
     setFormVisible(false);
     setEditingPharmacy(null);
   };
+
+  // Show loading state while database initializes
+  if (!isInitialized) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Pharmacies</Text>
+        </View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Sort pharmacies alphabetically by name
   const sortedPharmacies = [...(pharmacies || [])].sort((a, b) => {

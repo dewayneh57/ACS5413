@@ -20,7 +20,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useGlobalState } from "../context/GlobalStateContext";
+import { useDatabase } from "../context/DatabaseContext";
 import HospitalForm from "../forms/HospitalForm";
 import Hospital from "../models/Hospital";
 import MapButton from "../components/MapButton";
@@ -31,7 +31,13 @@ import MapButton from "../components/MapButton";
  * It allows the user to add, edit, and delete hospitals using a modal form.
  */
 export default function HospitalScreen() {
-  const { hospitals, setHospitals } = useGlobalState();
+  const {
+    hospitals,
+    addHospital,
+    updateHospital,
+    deleteHospital,
+    isInitialized,
+  } = useDatabase();
   const [formVisible, setFormVisible] = React.useState(false);
   const [editingHospital, setEditingHospital] = React.useState(null);
   const [windowWidth, setWindowWidth] = useState(
@@ -54,23 +60,17 @@ export default function HospitalScreen() {
     setFormVisible(true);
   };
 
-  const handleSaveHospital = (form) => {
+  const handleSaveHospital = async (form) => {
     if (editingHospital) {
       // Update existing hospital
-      setHospitals((prev) =>
-        prev.map((h) =>
-          h.id === editingHospital.id
-            ? new Hospital({ ...h, ...form, id: editingHospital.id })
-            : h
-        )
-      );
+      await updateHospital(editingHospital.id, form);
     } else {
       // Add new hospital
-      const newHospital = new Hospital({
+      const newHospital = {
         id: Date.now().toString(),
         ...form,
-      });
-      setHospitals((prev) => [...prev, newHospital]);
+      };
+      await addHospital(newHospital);
     }
     setFormVisible(false);
     setEditingHospital(null);
@@ -81,10 +81,8 @@ export default function HospitalScreen() {
     setFormVisible(true);
   };
 
-  const handleDeleteHospital = (form) => {
-    setHospitals((prev) =>
-      prev.filter((h) => h.id !== (form.id || editingHospital.id))
-    );
+  const handleDeleteHospital = async (form) => {
+    await deleteHospital(form.id || editingHospital.id);
     setFormVisible(false);
     setEditingHospital(null);
   };
@@ -95,6 +93,23 @@ export default function HospitalScreen() {
     const bName = b.name || "";
     return aName.localeCompare(bName);
   });
+
+  // Show loading state while database initializes
+  if (!isInitialized) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Hospitals</Text>
+        </View>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
