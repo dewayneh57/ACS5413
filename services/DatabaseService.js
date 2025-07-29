@@ -5,13 +5,17 @@
  * DatabaseService - SQLite database operations for all health management data
  * Handles initialization, CRUD operations, and data persistence for:
  * - Contacts, Doctors, Hospitals, Pharmacies, Medications, Insurance, Allergies, Medical History
+ * - Firebase synchronization for offline/online data sync
  */
 
 import * as SQLite from "expo-sqlite";
+import firebaseSyncService from "./FirebaseSyncService";
 
 class DatabaseService {
   constructor() {
     this.db = null;
+    this.userId = "default"; // You can make this dynamic based on user authentication
+    this.autoSyncEnabled = true;
   }
 
   async initDatabase() {
@@ -21,10 +25,69 @@ class DatabaseService {
       // Create tables if they don't exist
       await this.createTables();
 
+      // Check Firebase connectivity and sync if online
+      await this.initializeFirebaseSync();
+
       console.log("Database initialized successfully");
     } catch (error) {
       console.error("Error initializing database:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Initialize Firebase sync
+   */
+  async initializeFirebaseSync() {
+    try {
+      const isOnline = await firebaseSyncService.checkConnection();
+
+      if (isOnline) {
+        console.log("Online - setting up Firebase sync...");
+
+        // Sync local data to Firebase first
+        await firebaseSyncService.syncToFirebase(this, this.userId);
+
+        // Then sync any newer data from Firebase
+        await firebaseSyncService.syncFromFirebase(this, this.userId);
+
+        // Set up real-time listeners
+        firebaseSyncService.setupRealtimeSync(this, this.userId);
+
+        console.log("Firebase sync initialized");
+      } else {
+        console.log(
+          "Offline - Firebase sync will activate when connection is restored"
+        );
+      }
+    } catch (error) {
+      console.error("Error initializing Firebase sync:", error);
+      // Don't throw error - allow app to work offline
+    }
+  }
+
+  /**
+   * Manual sync trigger
+   */
+  async syncWithFirebase() {
+    try {
+      const isOnline = await firebaseSyncService.checkConnection();
+
+      if (!isOnline) {
+        console.log("Cannot sync: device is offline");
+        return { success: false, message: "Device is offline" };
+      }
+
+      // Sync to Firebase first
+      await firebaseSyncService.syncToFirebase(this, this.userId);
+
+      // Then sync from Firebase
+      await firebaseSyncService.syncFromFirebase(this, this.userId);
+
+      return { success: true, message: "Sync completed successfully" };
+    } catch (error) {
+      console.error("Error during manual sync:", error);
+      return { success: false, message: error.message };
     }
   }
 
@@ -252,7 +315,7 @@ class DatabaseService {
     }
   }
 
-  // Generic CRUD operations
+  // Generic CRUD operations with Firebase sync
   async insert(table, data) {
     try {
       // Only filter out null and undefined values, allow empty strings
@@ -268,6 +331,11 @@ class DatabaseService {
       if (!filteredData.id) {
         throw new Error(`${table} record must have an id`);
       }
+
+      // Add timestamps
+      filteredData.createdAt =
+        filteredData.createdAt || new Date().toISOString();
+      filteredData.updatedAt = new Date().toISOString();
 
       // Check for entity-specific required fields
       if (
@@ -302,6 +370,16 @@ class DatabaseService {
       const query = `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
       console.log(`Executing query: ${query}`, values);
       const result = await this.db.runAsync(query, values);
+
+      // Sync to Firebase if auto-sync is enabled
+      if (this.autoSyncEnabled) {
+        await firebaseSyncService.syncItemToFirebase(
+          table,
+          filteredData,
+          this.userId
+        );
+      }
+
       return result;
     } catch (error) {
       console.error(`Error inserting into ${table}:`, error);
@@ -327,6 +405,9 @@ class DatabaseService {
         return { changes: 0 };
       }
 
+      // Add updated timestamp
+      filteredData.updatedAt = new Date().toISOString();
+
       const setPairs = Object.keys(filteredData)
         .map((key) => `${key} = ?`)
         .join(", ");
@@ -335,6 +416,19 @@ class DatabaseService {
       const query = `UPDATE ${table} SET ${setPairs} WHERE id = ?`;
       console.log(`Executing update query: ${query}`, values);
       const result = await this.db.runAsync(query, values);
+
+      // Get the updated record for Firebase sync
+      if (this.autoSyncEnabled && result.changes > 0) {
+        const updatedRecord = await this.getById(table, id);
+        if (updatedRecord) {
+          await firebaseSyncService.syncItemToFirebase(
+            table,
+            updatedRecord,
+            this.userId
+          );
+        }
+      }
+
       return result;
     } catch (error) {
       console.error(`Error updating ${table}:`, error);
@@ -347,6 +441,16 @@ class DatabaseService {
     try {
       const query = `DELETE FROM ${table} WHERE id = ?`;
       const result = await this.db.runAsync(query, [id]);
+
+      // Sync deletion to Firebase if auto-sync is enabled
+      if (this.autoSyncEnabled && result.changes > 0) {
+        await firebaseSyncService.deleteItemFromFirebase(
+          table,
+          id,
+          this.userId
+        );
+      }
+
       return result;
     } catch (error) {
       console.error(`Error deleting from ${table}:`, error);
@@ -527,6 +631,14 @@ class DatabaseService {
       // Drop and recreate all tables to ensure latest schema
       await this.dropAndRecreateAllTables();
 
+      // Also clear Firebase data if online
+      if (this.autoSyncEnabled) {
+        const isOnline = await firebaseSyncService.checkConnection();
+        if (isOnline) {
+          await this.clearFirebaseData();
+        }
+      }
+
       console.log(
         "All data cleared successfully and tables recreated with latest schema"
       );
@@ -534,6 +646,62 @@ class DatabaseService {
       console.error("Error clearing data:", error);
       throw error;
     }
+  }
+
+  /**
+   * Clear all user data from Firebase
+   */
+  async clearFirebaseData() {
+    try {
+      const tables = [
+        "contacts",
+        "doctors",
+        "hospitals",
+        "pharmacies",
+        "medications",
+        "insurance",
+        "allergies",
+        "medical_history",
+      ];
+
+      for (const table of tables) {
+        const data = await this.getAll(table); // Should be empty after clearAllData
+        await firebaseSyncService.syncTableToFirebase(table, data, this.userId);
+      }
+
+      console.log("Firebase data cleared");
+    } catch (error) {
+      console.error("Error clearing Firebase data:", error);
+    }
+  }
+
+  /**
+   * Get sync status
+   */
+  async getSyncStatus() {
+    const isOnline = await firebaseSyncService.checkConnection();
+    return {
+      isOnline,
+      autoSyncEnabled: this.autoSyncEnabled,
+      pendingOperations: firebaseSyncService.pendingOperations.length,
+      userId: this.userId,
+    };
+  }
+
+  /**
+   * Toggle auto-sync
+   */
+  setAutoSync(enabled) {
+    this.autoSyncEnabled = enabled;
+    console.log(`Auto-sync ${enabled ? "enabled" : "disabled"}`);
+  }
+
+  /**
+   * Set user ID for Firebase sync
+   */
+  setUserId(userId) {
+    this.userId = userId;
+    console.log(`User ID set to: ${userId}`);
   }
 
   // Migration method to populate database with sample data

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useDatabase } from "../context/DatabaseContext";
 import Settings from "../models/Settings";
+import SyncStatusComponent from "../components/SyncStatusComponent";
 
 const SETTINGS_OPTIONS = [
   { key: "viewStyle", label: "View as Grid (on), or List (off)" },
@@ -92,6 +93,11 @@ const SettingsScreen = forwardRef((props, ref) => {
         )}
       />
 
+      {/* Firebase Sync Status */}
+      <View style={styles.syncSection}>
+        <SyncStatusComponent />
+      </View>
+
       <View style={styles.dangerSection}>
         <Text style={styles.dangerSectionTitle}>Data Management</Text>
         <TouchableOpacity
@@ -136,6 +142,11 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: 16,
     flex: 1,
+  },
+  syncSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    width: "100%",
   },
   dangerSection: {
     marginTop: 40,

@@ -46,6 +46,33 @@ export const DatabaseProvider = ({ children }) => {
     }
   };
 
+  // Firebase sync methods
+  const syncWithFirebase = async () => {
+    try {
+      const result = await databaseService.syncWithFirebase();
+      if (result.success) {
+        // Reload all data after successful sync
+        await loadAllData();
+      }
+      return result;
+    } catch (error) {
+      console.error("Error syncing with Firebase:", error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const getSyncStatus = async () => {
+    return await databaseService.getSyncStatus();
+  };
+
+  const setAutoSync = (enabled) => {
+    databaseService.setAutoSync(enabled);
+  };
+
+  const setUserId = (userId) => {
+    databaseService.setUserId(userId);
+  };
+
   const loadAllData = async () => {
     try {
       const [
@@ -392,6 +419,11 @@ export const DatabaseProvider = ({ children }) => {
         console.error("Error clearing all data:", error);
       }
     },
+    // Firebase sync operations
+    syncWithFirebase,
+    getSyncStatus,
+    setAutoSync,
+    setUserId,
     // Legacy setters for compatibility (these will be replaced)
     setContacts: (contacts) => setContacts(contacts),
     setDoctors: (doctors) => setDoctors(doctors),
