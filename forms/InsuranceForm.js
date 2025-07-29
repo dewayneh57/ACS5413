@@ -11,8 +11,8 @@ import {
   Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { PHONE_TYPES } from "../models/Insurance";
-import { USStates } from "../utils/USStates";
+import { PHONE_TYPES } from "../utils/PhoneTypes";
+import { US_STATES } from "../utils/USStates";
 
 export default function InsuranceForm({
   visible,
@@ -212,12 +212,8 @@ export default function InsuranceForm({
               style={styles.picker}
             >
               <Picker.Item label="Select State" value="" />
-              {USStates.map((state) => (
-                <Picker.Item
-                  key={state.value}
-                  label={state.label}
-                  value={state.value}
-                />
+              {(US_STATES || []).map((state) => (
+                <Picker.Item key={state} label={state} value={state} />
               ))}
             </Picker>
           </View>
@@ -273,7 +269,7 @@ export default function InsuranceForm({
                 onValueChange={(v) => handleChange("additionalPhone1Type", v)}
                 style={styles.picker}
               >
-                {PHONE_TYPES.map((type) => (
+                {(PHONE_TYPES || []).map((type) => (
                   <Picker.Item key={type} label={type} value={type} />
                 ))}
               </Picker>
@@ -294,7 +290,7 @@ export default function InsuranceForm({
                 onValueChange={(v) => handleChange("additionalPhone2Type", v)}
                 style={styles.picker}
               >
-                {PHONE_TYPES.map((type) => (
+                {(PHONE_TYPES || []).map((type) => (
                   <Picker.Item key={type} label={type} value={type} />
                 ))}
               </Picker>

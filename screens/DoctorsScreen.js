@@ -1,5 +1,5 @@
 /**
- * ACS5413 - Form Input
+ * ACS5413 - Personal Health Management
  * Dewayne Hafenstein - HAFE0010
  *
  * This screen displays a list of doctors, allowing the user to add, edit, and delete doctors.
@@ -17,11 +17,13 @@ import {
   Alert,
   SafeAreaView,
   Dimensions,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useGlobalState } from "../context/GlobalStateContext";
 import DoctorForm from "../forms/DoctorForm";
 import Doctor from "../models/Doctor";
+import MapButton from "../components/MapButton";
 
 /**
  *
@@ -87,14 +89,6 @@ export default function DoctorsScreen() {
     setEditingDoctor(null);
   };
 
-  const handleMapPress = (doctor) => {
-    // Placeholder for future map functionality
-    Alert.alert(
-      "Map Feature",
-      `Map functionality will be added later to show the location of ${doctor.getFullName()}`
-    );
-  };
-
   // Sort doctors alphabetically by last name, fallback to first name
   const sortedDoctors = [...(doctors || [])].sort((a, b) => {
     const aName = a.lastName || a.firstName || "";
@@ -104,10 +98,12 @@ export default function DoctorsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.header}>Doctors</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={handleAddDoctor}>
-          <Ionicons name="add-circle" size={48} color="#007AFF" />
+      <StatusBar barStyle="light-content" />
+
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Doctors</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddDoctor}>
+          <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
       <FlatList
@@ -135,12 +131,15 @@ export default function DoctorsScreen() {
                   </Text>
                 )}
               </View>
-              <TouchableOpacity
+              <MapButton
+                address={doctor.getFullAddress()}
+                entityName="doctor"
+                entityTitle={doctor.getFullName()}
                 style={styles.mapButton}
-                onPress={() => handleMapPress(doctor)}
-              >
-                <Ionicons name="map" size={20} color="#007AFF" />
-              </TouchableOpacity>
+                width={80}
+                height={60}
+                zoom={16}
+              />
             </TouchableOpacity>
           );
         }}
@@ -164,15 +163,34 @@ export default function DoctorsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  headerRow: {
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  header: {
+    backgroundColor: "#007AFF",
+    paddingTop: StatusBar.currentHeight || 44,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    alignItems: "center",
   },
-  header: { fontSize: 28, fontWeight: "bold" },
-  addBtn: { marginLeft: 12 },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  addButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "300",
+  },
   doctorRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -208,9 +226,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   mapButton: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#f0f0f0",
+    marginLeft: 8,
   },
   emptyText: {
     textAlign: "center",

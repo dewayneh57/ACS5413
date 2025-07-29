@@ -1,5 +1,5 @@
 /**
- * ACS5413 Assignment 5 - Form Input
+ * ACS5413 Assignment 5 - Personal Health Management
  * Dewayne Hafenstein - HAFE0010
  *
  * This project extends the previous assignment by adding form input to the contacts screen.  The other
@@ -26,36 +26,8 @@ function OrientationProvider({ children }) {
 }
 
 export default function App() {
-  const [settings, setSettings] = React.useState(new Settings());
-  const [contacts, setContacts] = React.useState([]);
-  const [doctors, setDoctors] = React.useState([]);
-  const [hospitals, setHospitals] = React.useState([]);
-  const [pharmacies, setPharmacies] = React.useState([]);
-  const [medications, setMedications] = React.useState([]);
-  const [insurance, setInsurance] = React.useState([]);
-  const [allergies, setAllergies] = React.useState([]);
-
   return (
-    <GlobalStateProvider
-      value={{
-        settings,
-        setSettings,
-        contacts,
-        setContacts,
-        doctors,
-        setDoctors,
-        hospitals,
-        setHospitals,
-        pharmacies,
-        setPharmacies,
-        medications,
-        setMedications,
-        insurance,
-        setInsurance,
-        allergies,
-        setAllergies,
-      }}
-    >
+    <GlobalStateProvider>
       <OrientationProvider>
         {(orientation) => (
           <NavigationContainer>

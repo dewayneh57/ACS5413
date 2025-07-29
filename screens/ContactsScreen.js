@@ -1,5 +1,5 @@
 /**
- * ACS5413 - Form Input
+ * ACS5413 - Personal Health Management
  * Dewayne Hafenstein - HAFE0010
  *
  * This screen displays a list of contacts, allowing the user to add, edit, and delete contacts.
@@ -17,6 +17,7 @@ import {
   Alert,
   SafeAreaView,
   Dimensions,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useGlobalState } from "../context/GlobalStateContext";
@@ -96,10 +97,12 @@ export default function ContactsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.header}>Contacts</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={handleAddContact}>
-          <Ionicons name="add-circle" size={48} color="#007AFF" />
+      <StatusBar barStyle="light-content" />
+
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Contacts</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddContact}>
+          <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
       <FlatList
@@ -142,15 +145,34 @@ export default function ContactsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  headerRow: {
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  header: {
+    backgroundColor: "#007AFF",
+    paddingTop: StatusBar.currentHeight || 44,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    alignItems: "center",
   },
-  header: { fontSize: 28, fontWeight: "bold" },
-  addBtn: { marginLeft: 12 },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  addButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "300",
+  },
   contactRow: {
     flexDirection: "row",
     alignItems: "center",

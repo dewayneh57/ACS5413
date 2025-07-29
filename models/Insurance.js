@@ -1,4 +1,5 @@
 import { formatPhoneNumber } from "../utils/FormatUtils";
+import { PHONE_TYPES } from "../utils/PhoneTypes";
 
 // Model for Insurance
 export default class Insurance {
@@ -138,14 +139,3 @@ export default class Insurance {
     return phones;
   }
 }
-
-// Available phone types for additional numbers
-export const PHONE_TYPES = [
-  "Work",
-  "Cell",
-  "Pager",
-  "Virtual Care",
-  "Find a Doctor",
-  "Healthcare Team",
-  "Other",
-];

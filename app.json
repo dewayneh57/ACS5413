@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "FormInput",
-    "slug": "FormInput",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "name": "Personal Health Management",
+    "slug": "ACS5413",
+    "version": "1.0.1",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,

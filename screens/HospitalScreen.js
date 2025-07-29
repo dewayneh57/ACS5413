@@ -1,5 +1,5 @@
 /**
- * ACS5413 - Form Input
+ * ACS5413 - Personal Health Management
  * Dewayne Hafenstein - HAFE0010
  *
  * This screen displays a list of hospitals, allowing the user to add, edit, and delete hospitals.
@@ -17,11 +17,13 @@ import {
   Alert,
   SafeAreaView,
   Dimensions,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useGlobalState } from "../context/GlobalStateContext";
 import HospitalForm from "../forms/HospitalForm";
 import Hospital from "../models/Hospital";
+import MapButton from "../components/MapButton";
 
 /**
  *
@@ -87,14 +89,6 @@ export default function HospitalScreen() {
     setEditingHospital(null);
   };
 
-  const handleMapPress = (hospital) => {
-    // Placeholder for future map functionality
-    Alert.alert(
-      "Map Feature",
-      `Map functionality will be added later to show the location of ${hospital.name}`
-    );
-  };
-
   // Sort hospitals alphabetically by name
   const sortedHospitals = [...(hospitals || [])].sort((a, b) => {
     const aName = a.name || "";
@@ -104,10 +98,12 @@ export default function HospitalScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.header}>Hospitals</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={handleAddHospital}>
-          <Ionicons name="add-circle" size={48} color="#007AFF" />
+      <StatusBar barStyle="light-content" />
+
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Hospitals</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddHospital}>
+          <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
       <FlatList
@@ -142,12 +138,15 @@ export default function HospitalScreen() {
                   {hospital.getNetworkStatus()}
                 </Text>
               </View>
-              <TouchableOpacity
+              <MapButton
+                address={hospital.getFullAddress()}
+                entityName="hospital"
+                entityTitle={hospital.name || "Unknown Hospital"}
                 style={styles.mapButton}
-                onPress={() => handleMapPress(hospital)}
-              >
-                <Ionicons name="map" size={20} color="#007AFF" />
-              </TouchableOpacity>
+                width={80}
+                height={60}
+                zoom={16}
+              />
             </TouchableOpacity>
           );
         }}
@@ -171,15 +170,34 @@ export default function HospitalScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#ffffff" },
-  headerRow: {
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  header: {
+    backgroundColor: "#007AFF",
+    paddingTop: StatusBar.currentHeight || 44,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    alignItems: "center",
   },
-  header: { fontSize: 28, fontWeight: "bold" },
-  addBtn: { marginLeft: 12 },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  addButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "300",
+  },
   hospitalRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -215,9 +233,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   mapButton: {
-    padding: 8,
-    borderRadius: 4,
-    backgroundColor: "#f0f0f0",
+    marginLeft: 8,
   },
   emptyText: {
     textAlign: "center",
