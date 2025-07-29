@@ -246,6 +246,99 @@ export const DatabaseProvider = ({ children }) => {
     }
   };
 
+  // Insurance operations
+  const addInsurance = async (insuranceData) => {
+    try {
+      await databaseService.addInsurance(insuranceData);
+      const updatedInsurance = await databaseService.getInsurance();
+      setInsurance(updatedInsurance.map((i) => new Insurance(i)));
+    } catch (error) {
+      console.error("Error adding insurance:", error);
+    }
+  };
+
+  const updateInsurance = async (id, insuranceData) => {
+    try {
+      await databaseService.updateInsurance(id, insuranceData);
+      const updatedInsurance = await databaseService.getInsurance();
+      setInsurance(updatedInsurance.map((i) => new Insurance(i)));
+    } catch (error) {
+      console.error("Error updating insurance:", error);
+    }
+  };
+
+  const deleteInsurance = async (id) => {
+    try {
+      await databaseService.deleteInsurance(id);
+      const updatedInsurance = await databaseService.getInsurance();
+      setInsurance(updatedInsurance.map((i) => new Insurance(i)));
+    } catch (error) {
+      console.error("Error deleting insurance:", error);
+    }
+  };
+
+  // Medication operations
+  const addMedication = async (medicationData) => {
+    try {
+      await databaseService.addMedication(medicationData);
+      const updatedMedications = await databaseService.getMedications();
+      setMedications(updatedMedications.map((m) => new Medication(m)));
+    } catch (error) {
+      console.error("Error adding medication:", error);
+    }
+  };
+
+  const updateMedication = async (id, medicationData) => {
+    try {
+      await databaseService.updateMedication(id, medicationData);
+      const updatedMedications = await databaseService.getMedications();
+      setMedications(updatedMedications.map((m) => new Medication(m)));
+    } catch (error) {
+      console.error("Error updating medication:", error);
+    }
+  };
+
+  const deleteMedication = async (id) => {
+    try {
+      await databaseService.deleteMedication(id);
+      const updatedMedications = await databaseService.getMedications();
+      setMedications(updatedMedications.map((m) => new Medication(m)));
+    } catch (error) {
+      console.error("Error deleting medication:", error);
+    }
+  };
+
+  // Medical History operations
+  const addMedicalHistory = async (historyData) => {
+    try {
+      await databaseService.addMedicalHistory(historyData);
+      const updatedHistory = await databaseService.getMedicalHistory();
+      setMedicalHistory(updatedHistory.map((h) => new MedicalHistory(h)));
+    } catch (error) {
+      console.error("Error adding medical history:", error);
+    }
+  };
+
+  const updateMedicalHistory = async (id, historyData) => {
+    try {
+      await databaseService.updateMedicalHistory(id, historyData);
+      const updatedHistory = await databaseService.getMedicalHistory();
+      setMedicalHistory(updatedHistory.map((h) => new MedicalHistory(h)));
+    } catch (error) {
+      console.error("Error updating medical history:", error);
+    }
+  };
+
+  const deleteMedicalHistory = async (id) => {
+    try {
+      await databaseService.deleteMedicalHistory(id);
+      const updatedHistory = await databaseService.getMedicalHistory();
+      setMedicalHistory(updatedHistory.map((h) => new MedicalHistory(h)));
+    } catch (error) {
+      console.error("Error deleting medical history:", error);
+    }
+  };
+
   const value = {
     isInitialized,
     // Data
@@ -278,6 +371,18 @@ export const DatabaseProvider = ({ children }) => {
     addAllergy,
     updateAllergy,
     deleteAllergy,
+    // Insurance operations
+    addInsurance,
+    updateInsurance,
+    deleteInsurance,
+    // Medication operations
+    addMedication,
+    updateMedication,
+    deleteMedication,
+    // Medical History operations
+    addMedicalHistory,
+    updateMedicalHistory,
+    deleteMedicalHistory,
     // Data management operations
     clearAllData: async () => {
       try {

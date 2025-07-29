@@ -12,7 +12,13 @@ import MedicalHistoryForm from "../forms/MedicalHistoryForm";
 import { createMedicalHistoryItem } from "../models/MedicalHistory";
 
 export default function HistoryScreen() {
-  const { medicalHistory, isInitialized } = useDatabase();
+  const {
+    medicalHistory,
+    addMedicalHistory,
+    updateMedicalHistory,
+    deleteMedicalHistory,
+    isInitialized,
+  } = useDatabase();
   // For now, we'll just display the data - full CRUD operations can be added later
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -31,46 +37,44 @@ export default function HistoryScreen() {
     setIsFormVisible(true);
   };
 
-  const handleSaveHistory = (historyData) => {
-    let updatedHistory;
+  const handleSaveHistory = async (historyData) => {
+    try {
+      if (editingItem) {
+        // Update existing item
+        const updatedData = {
+          ...historyData,
+          createdAt: editingItem.createdAt,
+          updatedAt: new Date().toISOString(),
+        };
+        await updateMedicalHistory(editingItem.id, updatedData);
+      } else {
+        // Add new item
+        const newItem = {
+          id: Date.now().toString(),
+          ...historyData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await addMedicalHistory(newItem);
+      }
 
-    if (editingItem) {
-      // Update existing item
-      updatedHistory = historyList.map((item) =>
-        item.id === editingItem.id
-          ? createMedicalHistoryItem(historyData.type, {
-              ...historyData,
-              id: editingItem.id,
-              createdAt: editingItem.createdAt,
-              updatedAt: new Date().toISOString(),
-            })
-          : item
-      );
-    } else {
-      // Add new item
-      const newItem = createMedicalHistoryItem(historyData.type, historyData);
-      updatedHistory = [...historyList, newItem];
+      setIsFormVisible(false);
+      setEditingItem(null);
+    } catch (error) {
+      console.error("Error saving medical history:", error);
+      // You might want to show an error message to the user here
     }
-
-    // Sort by date (most recent first)
-    updatedHistory.sort((a, b) => {
-      const dateA = new Date(a.date || a.onsetDate || a.createdAt);
-      const dateB = new Date(b.date || b.onsetDate || b.createdAt);
-      return dateB - dateA;
-    });
-
-    setMedicalHistory(updatedHistory);
-    setIsFormVisible(false);
-    setEditingItem(null);
   };
 
-  const handleDeleteHistory = (itemToDelete) => {
-    const updatedHistory = historyList.filter(
-      (item) => item.id !== itemToDelete.id
-    );
-    setMedicalHistory(updatedHistory);
-    setIsFormVisible(false);
-    setEditingItem(null);
+  const handleDeleteHistory = async (itemToDelete) => {
+    try {
+      await deleteMedicalHistory(itemToDelete.id);
+      setIsFormVisible(false);
+      setEditingItem(null);
+    } catch (error) {
+      console.error("Error deleting medical history:", error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const getTypeIcon = (type) => {

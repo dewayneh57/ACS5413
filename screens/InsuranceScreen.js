@@ -12,7 +12,13 @@ import InsuranceForm from "../forms/InsuranceForm";
 import Insurance from "../models/Insurance";
 
 export default function InsuranceScreen() {
-  const { insurance, isInitialized } = useDatabase();
+  const {
+    insurance,
+    addInsurance,
+    updateInsurance,
+    deleteInsurance,
+    isInitialized,
+  } = useDatabase();
   // For now, we'll just display the data - full CRUD operations can be added later
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingInsurance, setEditingInsurance] = useState(null);
@@ -30,34 +36,37 @@ export default function InsuranceScreen() {
     setIsFormVisible(true);
   };
 
-  const handleSaveInsurance = (insuranceData) => {
-    let updatedInsurance;
+  const handleSaveInsurance = async (insuranceData) => {
+    try {
+      if (editingInsurance) {
+        // Update existing insurance
+        await updateInsurance(editingInsurance.id, insuranceData);
+      } else {
+        // Add new insurance
+        const newInsurance = {
+          id: Date.now().toString(),
+          ...insuranceData,
+        };
+        await addInsurance(newInsurance);
+      }
 
-    if (editingInsurance) {
-      // Update existing insurance
-      updatedInsurance = insuranceList.map((ins) =>
-        ins.id === editingInsurance.id
-          ? new Insurance({ ...insuranceData, id: editingInsurance.id })
-          : ins
-      );
-    } else {
-      // Add new insurance
-      const newInsurance = new Insurance(insuranceData);
-      updatedInsurance = [...insuranceList, newInsurance];
+      setIsFormVisible(false);
+      setEditingInsurance(null);
+    } catch (error) {
+      console.error("Error saving insurance:", error);
+      // You might want to show an error message to the user here
     }
-
-    setInsurance(updatedInsurance);
-    setIsFormVisible(false);
-    setEditingInsurance(null);
   };
 
-  const handleDeleteInsurance = (insuranceToDelete) => {
-    const updatedInsurance = insuranceList.filter(
-      (ins) => ins.id !== insuranceToDelete.id
-    );
-    setInsurance(updatedInsurance);
-    setIsFormVisible(false);
-    setEditingInsurance(null);
+  const handleDeleteInsurance = async (insuranceToDelete) => {
+    try {
+      await deleteInsurance(insuranceToDelete.id);
+      setIsFormVisible(false);
+      setEditingInsurance(null);
+    } catch (error) {
+      console.error("Error deleting insurance:", error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const renderPhoneNumbers = (insuranceItem) => {

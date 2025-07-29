@@ -18,7 +18,7 @@ class DatabaseService {
     try {
       this.db = await SQLite.openDatabaseAsync("health_management.db");
 
-      // Create tables if they don't exist (preserves existing data)
+      // Create tables if they don't exist
       await this.createTables();
 
       console.log("Database initialized successfully");
@@ -171,7 +171,7 @@ class DatabaseService {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
-      // Medical History table - matches MedicalHistoryItem model
+      // Medical History table - matches MedicalHistoryItem model with all possible fields
       `CREATE TABLE IF NOT EXISTS medical_history (
         id TEXT PRIMARY KEY,
         type TEXT,
@@ -180,6 +180,49 @@ class DatabaseService {
         doctor TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        -- Surgery fields
+        procedure TEXT,
+        surgeon TEXT,
+        outcome TEXT,
+        hospital TEXT,
+        complications TEXT,
+        -- Diagnosis fields
+        condition TEXT,
+        diagnosingDoctor TEXT,
+        severity TEXT,
+        status TEXT,
+        treatment TEXT,
+        -- Test fields
+        testName TEXT,
+        testType TEXT,
+        results TEXT,
+        normalRange TEXT,
+        orderingDoctor TEXT,
+        facility TEXT,
+        -- Illness fields
+        illness TEXT,
+        onsetDate TEXT,
+        resolutionDate TEXT,
+        symptoms TEXT,
+        -- Injury fields
+        injuryType TEXT,
+        bodyPart TEXT,
+        cause TEXT,
+        healingTime TEXT,
+        -- Immunization fields
+        vaccine TEXT,
+        manufacturer TEXT,
+        lotNumber TEXT,
+        administeredBy TEXT,
+        nextDueDate TEXT,
+        reactions TEXT,
+        -- Medical device fields
+        deviceName TEXT,
+        modelNumber TEXT,
+        serialNumber TEXT,
+        implantDate TEXT,
+        batteryLife TEXT,
+        nextMaintenance TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -481,23 +524,12 @@ class DatabaseService {
   // Method to clear all data from all tables
   async clearAllData() {
     try {
-      const tables = [
-        "contacts",
-        "doctors",
-        "hospitals",
-        "pharmacies",
-        "medications",
-        "insurance",
-        "allergies",
-        "medical_history",
-        "medical_devices",
-      ];
+      // Drop and recreate all tables to ensure latest schema
+      await this.dropAndRecreateAllTables();
 
-      for (const table of tables) {
-        await this.db.execAsync(`DELETE FROM ${table}`);
-      }
-
-      console.log("All data cleared successfully");
+      console.log(
+        "All data cleared successfully and tables recreated with latest schema"
+      );
     } catch (error) {
       console.error("Error clearing data:", error);
       throw error;

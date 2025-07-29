@@ -12,7 +12,13 @@ import MedicationForm from "../forms/MedicationForm";
 import Medication from "../models/Medication";
 
 export default function MedicationsScreen() {
-  const { medications, isInitialized } = useDatabase();
+  const {
+    medications,
+    addMedication,
+    updateMedication,
+    deleteMedication,
+    isInitialized,
+  } = useDatabase();
   // For now, we'll just display the data - full CRUD operations can be added later
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingMedication, setEditingMedication] = useState(null);
@@ -30,34 +36,37 @@ export default function MedicationsScreen() {
     setIsFormVisible(true);
   };
 
-  const handleSaveMedication = (medicationData) => {
-    let updatedMedications;
+  const handleSaveMedication = async (medicationData) => {
+    try {
+      if (editingMedication) {
+        // Update existing medication
+        await updateMedication(editingMedication.id, medicationData);
+      } else {
+        // Add new medication
+        const newMedication = {
+          id: Date.now().toString(),
+          ...medicationData,
+        };
+        await addMedication(newMedication);
+      }
 
-    if (editingMedication) {
-      // Update existing medication
-      updatedMedications = medicationsList.map((med) =>
-        med.id === editingMedication.id
-          ? new Medication({ ...medicationData, id: editingMedication.id })
-          : med
-      );
-    } else {
-      // Add new medication
-      const newMedication = new Medication(medicationData);
-      updatedMedications = [...medicationsList, newMedication];
+      setIsFormVisible(false);
+      setEditingMedication(null);
+    } catch (error) {
+      console.error("Error saving medication:", error);
+      // You might want to show an error message to the user here
     }
-
-    setMedications(updatedMedications);
-    setIsFormVisible(false);
-    setEditingMedication(null);
   };
 
-  const handleDeleteMedication = (medicationToDelete) => {
-    const updatedMedications = medicationsList.filter(
-      (med) => med.id !== medicationToDelete.id
-    );
-    setMedications(updatedMedications);
-    setIsFormVisible(false);
-    setEditingMedication(null);
+  const handleDeleteMedication = async (medicationToDelete) => {
+    try {
+      await deleteMedication(medicationToDelete.id);
+      setIsFormVisible(false);
+      setEditingMedication(null);
+    } catch (error) {
+      console.error("Error deleting medication:", error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const renderMedicationItem = ({ item }) => (
