@@ -20,9 +20,6 @@ import MainTabsComponent from "./components/MainTabsComponent";
 import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
 import { Platform } from "react-native";
-import firebaseSyncService from "./services/FirebaseSyncService";
-import { MEDICAL_DOSING_INSTRUCTIONS } from "./utils/MedicalDosingInstructions";
-import { getDosingInstructionDisplay } from "./utils/MedicalDosingInstructions";
 
 // Configure local notification handler.
 Notifications.setNotificationHandler({

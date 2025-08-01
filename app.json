@@ -34,6 +34,13 @@
           "color": "#ffffff",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you add pill images to your medication records.",
+          "cameraPermission": "The app accesses your camera to let you take photos of your pills for medication records."
+        }
       ]
     ]
   }

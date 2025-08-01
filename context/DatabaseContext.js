@@ -8,6 +8,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import databaseService from "../services/DatabaseService";
+import medicationNotificationService from "../services/MedicationNotificationService";
 import Contact from "../models/Contact";
 import Doctor from "../models/Doctor";
 import Hospital from "../models/Hospital";
@@ -101,11 +102,24 @@ export const DatabaseProvider = ({ children }) => {
       setDoctors(doctorsData.map((d) => new Doctor(d)));
       setHospitals(hospitalsData.map((h) => new Hospital(h)));
       setPharmacies(pharmaciesData.map((p) => new Pharmacy(p)));
-      setMedications(medicationsData.map((m) => new Medication(m)));
+      const medicationModels = medicationsData.map((m) => new Medication(m));
+      setMedications(medicationModels);
       setInsurance(insuranceData.map((i) => new Insurance(i)));
       setAllergies(allergiesData.map((a) => new Allergy(a)));
       setMedicalHistory(historyData.map((h) => new MedicalHistory(h)));
       setMedicalDevices(devicesData.map((d) => new MedicalDevice(d)));
+
+      // Initialize medication notifications after loading medications
+      if (medicationModels.length > 0) {
+        try {
+          await medicationNotificationService.updateMedicationNotifications(
+            medicationModels
+          );
+        } catch (error) {
+          console.error("Error initializing medication notifications:", error);
+          // Don't throw - notifications are supplementary functionality
+        }
+      }
 
       // No sample data population - start with empty database
     } catch (error) {
@@ -304,12 +318,30 @@ export const DatabaseProvider = ({ children }) => {
     }
   };
 
+  // Helper function to update medication notifications
+  const updateMedicationNotifications = async () => {
+    try {
+      await medicationNotificationService.updateMedicationNotifications(
+        medications
+      );
+    } catch (error) {
+      console.error("Error updating medication notifications:", error);
+      // Don't throw - notifications are supplementary functionality
+    }
+  };
+
   // Medication operations
   const addMedication = async (medicationData) => {
     try {
       await databaseService.addMedication(medicationData);
       const updatedMedications = await databaseService.getMedications();
-      setMedications(updatedMedications.map((m) => new Medication(m)));
+      const medicationModels = updatedMedications.map((m) => new Medication(m));
+      setMedications(medicationModels);
+
+      // Update notifications with the new medication list
+      await medicationNotificationService.updateMedicationNotifications(
+        medicationModels
+      );
     } catch (error) {
       console.error("Error adding medication:", error);
     }
@@ -319,7 +351,13 @@ export const DatabaseProvider = ({ children }) => {
     try {
       await databaseService.updateMedication(id, medicationData);
       const updatedMedications = await databaseService.getMedications();
-      setMedications(updatedMedications.map((m) => new Medication(m)));
+      const medicationModels = updatedMedications.map((m) => new Medication(m));
+      setMedications(medicationModels);
+
+      // Update notifications with the updated medication list
+      await medicationNotificationService.updateMedicationNotifications(
+        medicationModels
+      );
     } catch (error) {
       console.error("Error updating medication:", error);
     }
@@ -329,7 +367,13 @@ export const DatabaseProvider = ({ children }) => {
     try {
       await databaseService.deleteMedication(id);
       const updatedMedications = await databaseService.getMedications();
-      setMedications(updatedMedications.map((m) => new Medication(m)));
+      const medicationModels = updatedMedications.map((m) => new Medication(m));
+      setMedications(medicationModels);
+
+      // Update notifications with the updated medication list
+      await medicationNotificationService.updateMedicationNotifications(
+        medicationModels
+      );
     } catch (error) {
       console.error("Error deleting medication:", error);
     }
@@ -414,6 +458,8 @@ export const DatabaseProvider = ({ children }) => {
     clearAllData: async () => {
       try {
         await databaseService.clearAllData();
+        // Cancel all medication notifications since all data is cleared
+        await medicationNotificationService.cancelAllMedicationNotifications();
         await loadAllData(); // Reload to reflect cleared state
       } catch (error) {
         console.error("Error clearing all data:", error);
@@ -424,6 +470,12 @@ export const DatabaseProvider = ({ children }) => {
     getSyncStatus,
     setAutoSync,
     setUserId,
+    // Medication notification operations
+    getScheduledMedicationNotifications: () =>
+      medicationNotificationService.getScheduledMedicationNotifications(),
+    cancelAllMedicationNotifications: () =>
+      medicationNotificationService.cancelAllMedicationNotifications(),
+    updateMedicationNotifications: () => updateMedicationNotifications(),
     // Legacy setters for compatibility (these will be replaced)
     setContacts: (contacts) => setContacts(contacts),
     setDoctors: (doctors) => setDoctors(doctors),

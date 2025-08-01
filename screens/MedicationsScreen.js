@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Image,
 } from "react-native";
 import { useDatabase } from "../context/DatabaseContext";
 import MedicationForm from "../forms/MedicationForm";
@@ -74,15 +75,28 @@ export default function MedicationsScreen() {
       style={styles.medicationItem}
       onPress={() => handleEditMedication(item)}
     >
-      <View style={styles.medicationHeader}>
-        <Text style={styles.drugName}>{item.getDisplayName()}</Text>
-        <Text style={styles.doseInfo}>{item.getDoseInfo()}</Text>
+      <View style={styles.medicationContent}>
+        {item.pillImage && (
+          <Image source={{ uri: item.pillImage }} style={styles.pillImage} />
+        )}
+        <View style={styles.medicationDetails}>
+          <View style={styles.medicationHeader}>
+            <Text style={styles.drugName}>{item.getDisplayName()}</Text>
+            <Text style={styles.doseInfo}>{item.getDoseInfo()}</Text>
+          </View>
+          <Text style={styles.dosingInstructions}>
+            {item.dosingInstructions}
+          </Text>
+          {item.rxNumber && (
+            <Text style={styles.rxInfo}>{item.getRxInfo()}</Text>
+          )}
+          {item.manufacturer && (
+            <Text style={styles.manufacturer}>
+              Made by: {item.manufacturer}
+            </Text>
+          )}
+        </View>
       </View>
-      <Text style={styles.dosingInstructions}>{item.dosingInstructions}</Text>
-      {item.rxNumber && <Text style={styles.rxInfo}>{item.getRxInfo()}</Text>}
-      {item.manufacturer && (
-        <Text style={styles.manufacturer}>Made by: {item.manufacturer}</Text>
-      )}
     </TouchableOpacity>
   );
 
@@ -176,6 +190,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  medicationContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  pillImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: 12,
+    backgroundColor: "#f0f0f0",
+  },
+  medicationDetails: {
+    flex: 1,
   },
   medicationHeader: {
     flexDirection: "row",

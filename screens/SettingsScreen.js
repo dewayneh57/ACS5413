@@ -11,10 +11,13 @@ import {
   Switch,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from "react-native";
+import * as Notifications from "expo-notifications";
 import { useDatabase } from "../context/DatabaseContext";
 import Settings from "../models/Settings";
 import SyncStatusComponent from "../components/SyncStatusComponent";
+import MedicationNotificationComponent from "../components/MedicationNotificationComponent";
 
 const SETTINGS_OPTIONS = [
   { key: "viewStyle", label: "View as Grid (on), or List (off)" },
@@ -74,8 +77,62 @@ const SettingsScreen = forwardRef((props, ref) => {
     );
   };
 
+  const handleTestNotification = async () => {
+    try {
+      // Request notification permissions if not already granted
+      const { status } = await Notifications.getPermissionsAsync();
+      let finalStatus = status;
+
+      if (finalStatus !== "granted") {
+        const { status: newStatus } =
+          await Notifications.requestPermissionsAsync();
+        finalStatus = newStatus;
+      }
+
+      if (finalStatus !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please enable notifications in your device settings to receive medication reminders."
+        );
+        return;
+      }
+
+      // Schedule a test notification for 1 minute from now
+      const testTime = new Date();
+      testTime.setMinutes(testTime.getMinutes() + 1);
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Test Notification",
+          body: "This is a test notification scheduled 1 minute ago.",
+          data: {
+            type: "test_notification",
+            scheduledTime: testTime.toISOString(),
+          },
+          sound: "default",
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 60, // 1 minute from now
+          repeats: false,
+        },
+      });
+
+      Alert.alert(
+        "Test Notification Scheduled",
+        "A test notification has been scheduled for 1 minute from now."
+      );
+    } catch (error) {
+      console.error("Error scheduling test notification:", error);
+      Alert.alert("Error", "Failed to schedule test notification.");
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+    >
       <Text style={styles.text}>Settings and Options</Text>
       <FlatList
         data={SETTINGS_OPTIONS}
@@ -91,6 +148,7 @@ const SettingsScreen = forwardRef((props, ref) => {
             ) : null}
           </View>
         )}
+        scrollEnabled={false}
       />
 
       {/* Firebase Sync Status */}
@@ -98,8 +156,27 @@ const SettingsScreen = forwardRef((props, ref) => {
         <SyncStatusComponent />
       </View>
 
+      {/* Medication Notifications */}
+      <View style={styles.notificationSection}>
+        <MedicationNotificationComponent />
+      </View>
+
       <View style={styles.dangerSection}>
         <Text style={styles.dangerSectionTitle}>Data Management</Text>
+
+        <TouchableOpacity
+          style={styles.testNotificationButton}
+          onPress={handleTestNotification}
+        >
+          <Text style={styles.testNotificationButtonText}>
+            Send Test Notification
+          </Text>
+        </TouchableOpacity>
+        <Text style={styles.testNotificationText}>
+          This will send a test notification in 1 minute to verify your
+          notification settings.
+        </Text>
+
         <TouchableOpacity
           style={styles.clearDataButton}
           onPress={handleClearAllData}
@@ -112,7 +189,7 @@ const SettingsScreen = forwardRef((props, ref) => {
           history.
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 });
 
@@ -121,10 +198,13 @@ export default SettingsScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  contentContainer: {
     alignItems: "center",
     justifyContent: "flex-start",
-    backgroundColor: "#ffffff",
     paddingTop: 16,
+    paddingBottom: 40,
   },
   text: {
     fontSize: 24,
@@ -148,6 +228,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     width: "100%",
   },
+  notificationSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    width: "100%",
+  },
   dangerSection: {
     marginTop: 40,
     paddingHorizontal: 20,
@@ -158,6 +243,26 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
     color: "#dc3545",
+  },
+  testNotificationButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  testNotificationButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  testNotificationText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    fontStyle: "italic",
+    marginBottom: 20,
   },
   clearDataButton: {
     backgroundColor: "#dc3545",

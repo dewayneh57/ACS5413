@@ -9,7 +9,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image,
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
@@ -17,6 +16,7 @@ import {
   MEDICAL_DOSING_INSTRUCTIONS,
   getDosingInstructionDisplay,
 } from "../utils/MedicalDosingInstructions";
+import PillImagePicker from "../components/PillImagePicker";
 
 export default function MedicationForm({
   visible,
@@ -63,14 +63,6 @@ export default function MedicationForm({
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: false }));
-  };
-
-  const handleAddImage = () => {
-    // Placeholder for future image picker functionality
-    Alert.alert(
-      "Add Pill Image",
-      "Image picker functionality will be added later to allow users to take or select a photo of their medication."
-    );
   };
 
   const handleSave = () => {
@@ -246,31 +238,11 @@ export default function MedicationForm({
             keyboardType="default"
           />
 
-          <Text style={styles.sectionHeader}>Pill Image</Text>
-
-          <View style={styles.imageSection}>
-            {form.pillImage ? (
-              <View style={styles.imageContainer}>
-                <Image
-                  source={{ uri: form.pillImage }}
-                  style={styles.pillImage}
-                />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => handleChange("pillImage", null)}
-                >
-                  <Text style={styles.removeImageText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.addImageButton}
-                onPress={handleAddImage}
-              >
-                <Text style={styles.addImageText}>+ Add Pill Photo</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <PillImagePicker
+            imageUri={form.pillImage}
+            onImageSelected={(uri) => handleChange("pillImage", uri)}
+            onImageRemoved={() => handleChange("pillImage", null)}
+          />
 
           <View style={styles.buttonContainer}>
             <View style={styles.buttonRow}>
@@ -332,43 +304,6 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: "#ff3333",
-  },
-  imageSection: {
-    marginBottom: 16,
-  },
-  imageContainer: {
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  pillImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  removeImageButton: {
-    backgroundColor: "#FF3B30",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 4,
-  },
-  removeImageText: {
-    color: "#fff",
-    fontSize: 14,
-  },
-  addImageButton: {
-    borderWidth: 2,
-    borderColor: "#007AFF",
-    borderStyle: "dashed",
-    borderRadius: 8,
-    padding: 24,
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-  },
-  addImageText: {
-    color: "#007AFF",
-    fontSize: 16,
-    fontWeight: "500",
   },
   label: {
     fontSize: 16,
