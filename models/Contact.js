@@ -19,6 +19,8 @@ export default class Contact {
       email = "",
       notes = "",
       relationship = "",
+      createdAt = "",
+      updatedAt = "",
     } = props;
 
     this.id = id;
@@ -39,6 +41,8 @@ export default class Contact {
     this.email = email;
     this.notes = notes;
     this.relationship = relationship;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   getFullName() {

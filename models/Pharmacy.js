@@ -13,6 +13,8 @@ export default class Pharmacy {
       zip = "",
       phone = "",
       inNetwork = false,
+      createdAt = "",
+      updatedAt = "",
     } = props;
 
     this.id = id;
@@ -24,6 +26,8 @@ export default class Pharmacy {
     this.zip = zip;
     this.phone = phone;
     this.inNetwork = inNetwork;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   getDisplayPhone() {

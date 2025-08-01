@@ -15,6 +15,8 @@ export default class Doctor {
       state = "",
       zip = "",
       phone = "",
+      createdAt = "",
+      updatedAt = "",
     } = props;
 
     this.id = id;
@@ -28,6 +30,8 @@ export default class Doctor {
     this.state = state;
     this.zip = zip;
     this.phone = phone;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   getFullName() {

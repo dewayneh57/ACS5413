@@ -22,6 +22,8 @@ export default class Insurance {
       additionalPhone1Type = "Other",
       additionalPhone2 = "",
       additionalPhone2Type = "Other",
+      createdAt = "",
+      updatedAt = "",
     } = props;
 
     this.id =
@@ -42,6 +44,8 @@ export default class Insurance {
     this.additionalPhone1Type = additionalPhone1Type;
     this.additionalPhone2 = additionalPhone2;
     this.additionalPhone2Type = additionalPhone2Type;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   getDisplayName() {
