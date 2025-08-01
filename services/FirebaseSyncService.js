@@ -1,11 +1,4 @@
 /**
- * Firebase Sync Se      if (!wasOnline && this.isOnline) {
-        console.log('Network restored, running intelligent sync and processing pending operations...');
-        // Run intelligent sync first to merge all data
-        this.triggerIntelligentSyncOnReconnect();
-        // Then process any pending operations
-        this.syncPendingOperations();
-      }e
  * ACS5413 - Personal Health Management
  * Dewayne Hafenstein - HAFE0010
  *
@@ -47,7 +40,7 @@ class FirebaseSyncService {
   /**
    * Sync all data from SQLite to Firebase
    */
-  async syncToFirebase(databaseService, userId = "default") {
+  async syncWithFirebase(databaseService, userId = "default") {
     if (!this.isOnline || this.syncInProgress) {
       console.log("Sync skipped: offline or sync in progress");
       return;
@@ -56,7 +49,7 @@ class FirebaseSyncService {
     this.syncInProgress = true;
 
     try {
-      console.log("Starting sync to Firebase...");
+      console.log("Starting sync with Firebase...");
 
       const tables = [
         "contacts",
@@ -74,9 +67,9 @@ class FirebaseSyncService {
         await this.syncTableToFirebase(table, data, userId);
       }
 
-      console.log("Sync to Firebase completed successfully");
+      console.log("Sync with Firebase completed successfully");
     } catch (error) {
-      console.error("Error syncing to Firebase:", error);
+      console.error("Error syncing with Firebase:", error);
       throw error;
     } finally {
       this.syncInProgress = false;
@@ -261,18 +254,23 @@ class FirebaseSyncService {
       console.log(`- Local timestamp: ${localTimestamp}`);
       console.log(`- Firebase timestamp: ${firebaseTimestamp}`);
 
+      // If firebase is newer, update local;
       if (firebaseTimestamp > localTimestamp) {
         // Firebase version is newer, update local
         console.log(
           `Firebase version is newer, updating local ${tableName}/${id}`
         );
         await this.updateLocal(tableName, id, firebaseItem, databaseService);
+
+        // If local is newer, update Firebase
       } else if (localTimestamp > firebaseTimestamp) {
         // Local version is newer, update Firebase
         console.log(
           `Local version is newer, updating Firebase ${tableName}/${id}`
         );
         await this.syncItemToFirebase(tableName, localItem, userId);
+
+        // If they are the same, no action is needed
       } else {
         // Same timestamp, no action needed
         console.log(`Same timestamp for ${tableName}/${id}, no action needed`);
@@ -303,7 +301,7 @@ class FirebaseSyncService {
   /**
    * Sync specific table data to Firebase
    */
-  async syncTableToFirebase(tableName, data, userId = "default") {
+  async syncTableWithFirebase(tableName, data, userId = "default") {
     if (!this.isOnline) {
       this.addPendingOperation("sync", tableName, data, userId);
       return;
@@ -645,8 +643,6 @@ class FirebaseSyncService {
     }
 
     try {
-      // This would be more sophisticated in a production app
-      // For now, we'll just log the update
       console.log(`Real-time update available for ${tableName}`);
     } catch (error) {
       console.error(`Error handling real-time update for ${tableName}:`, error);

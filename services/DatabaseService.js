@@ -152,6 +152,7 @@ class DatabaseService {
         relationship TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -170,6 +171,7 @@ class DatabaseService {
         phone TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -186,6 +188,7 @@ class DatabaseService {
         inNetwork INTEGER DEFAULT 0,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -202,6 +205,7 @@ class DatabaseService {
         inNetwork INTEGER DEFAULT 0,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -218,6 +222,7 @@ class DatabaseService {
         pillImage TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -242,6 +247,7 @@ class DatabaseService {
         additionalPhone2Type TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -254,6 +260,7 @@ class DatabaseService {
         description TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -309,6 +316,7 @@ class DatabaseService {
         implantDate TEXT,
         batteryLife TEXT,
         nextMaintenance TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -329,6 +337,7 @@ class DatabaseService {
         nextMaintenance TEXT,
         createdAt TEXT,
         updatedAt TEXT,
+        lastSyncedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
     ];
