@@ -25,6 +25,9 @@ class DatabaseService {
       // Create tables if they don't exist
       await this.createTables();
 
+      // Run medications table migration for new dosing instructions schema
+      await this.migrateMedicationsTable();
+
       // Set up reconnect callback for intelligent sync
       firebaseSyncService.setReconnectCallback(async () => {
         console.log("Running intelligent sync after reconnection...");
@@ -131,6 +134,80 @@ class DatabaseService {
     }
   }
 
+  /**
+   * Migrate medications table to support new dosing instructions schema
+   */
+  async migrateMedicationsTable() {
+    try {
+      // Check if new columns exist
+      const tableInfo = await this.db.getAllAsync(
+        "PRAGMA table_info(medications)"
+      );
+      const hasNewColumns = tableInfo.some(
+        (col) => col.name === "dosingInstructionsType"
+      );
+
+      if (!hasNewColumns) {
+        console.log(
+          "Migrating medications table for new dosing instructions schema..."
+        );
+
+        // Get existing data
+        const existingMedications = await this.db.getAllAsync(
+          "SELECT * FROM medications"
+        );
+
+        // Drop and recreate table
+        await this.db.execAsync("DROP TABLE IF EXISTS medications");
+        await this.db.execAsync(`CREATE TABLE medications (
+          id TEXT PRIMARY KEY,
+          drugName TEXT,
+          genericName TEXT,
+          manufacturer TEXT,
+          doseSize TEXT,
+          dosingInstructionsType TEXT,
+          dosingInstructions TEXT,
+          customDosingInstructions TEXT,
+          rxNumber TEXT,
+          prescriptionQuantity TEXT,
+          pillImage TEXT,
+          createdAt TEXT,
+          updatedAt TEXT,
+          lastSyncedAt TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Migrate existing data
+        for (const med of existingMedications) {
+          const migratedData = {
+            ...med,
+            dosingInstructionsType: med.dosingInstructions ? "custom" : "",
+            customDosingInstructions: med.dosingInstructions || "",
+            dosingInstructions: "",
+          };
+
+          const columns = Object.keys(migratedData).join(", ");
+          const placeholders = Object.keys(migratedData)
+            .map(() => "?")
+            .join(", ");
+          const values = Object.values(migratedData);
+
+          await this.db.runAsync(
+            `INSERT INTO medications (${columns}) VALUES (${placeholders})`,
+            values
+          );
+        }
+
+        console.log(
+          `Migrated ${existingMedications.length} medications to new schema`
+        );
+      }
+    } catch (error) {
+      console.error("Error migrating medications table:", error);
+      throw error;
+    }
+  }
+
   async createTables() {
     const queries = [
       // Contacts table - matches Contact model
@@ -216,7 +293,9 @@ class DatabaseService {
         genericName TEXT,
         manufacturer TEXT,
         doseSize TEXT,
+        dosingInstructionsType TEXT,
         dosingInstructions TEXT,
+        customDosingInstructions TEXT,
         rxNumber TEXT,
         prescriptionQuantity TEXT,
         pillImage TEXT,
@@ -698,10 +777,14 @@ class DatabaseService {
 
       for (const table of tables) {
         const data = await this.getAll(table); // Should be empty after clearAllData
-        await firebaseSyncService.syncTableToFirebase(table, data, this.userId);
+        await firebaseSyncService.syncTableWithFirebase(
+          table,
+          data,
+          this.userId
+        );
       }
 
-      console.log("Firebase data cleared");
+      console.log("Firebase data cleared as part of Clear All Data operation");
     } catch (error) {
       console.error("Error clearing Firebase data:", error);
     }

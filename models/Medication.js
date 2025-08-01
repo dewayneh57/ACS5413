@@ -7,7 +7,9 @@ export default class Medication {
       genericName = "",
       manufacturer = "",
       doseSize = "",
+      dosingInstructionsType = "",
       dosingInstructions = "",
+      customDosingInstructions = "",
       rxNumber = "",
       prescriptionQuantity = "",
       pillImage = null, // URI or require path for pill image
@@ -21,7 +23,9 @@ export default class Medication {
     this.genericName = genericName;
     this.manufacturer = manufacturer;
     this.doseSize = doseSize;
+    this.dosingInstructionsType = dosingInstructionsType;
     this.dosingInstructions = dosingInstructions;
+    this.customDosingInstructions = customDosingInstructions;
     this.rxNumber = rxNumber;
     this.prescriptionQuantity = prescriptionQuantity;
     this.pillImage = pillImage;
@@ -40,7 +44,14 @@ export default class Medication {
   getDoseInfo() {
     const parts = [];
     if (this.doseSize) parts.push(this.doseSize);
-    if (this.dosingInstructions) parts.push(this.dosingInstructions);
+
+    // Use custom instructions if type is custom, otherwise use standard dosing instructions
+    const instructions =
+      this.dosingInstructionsType === "custom"
+        ? this.customDosingInstructions
+        : this.dosingInstructions;
+
+    if (instructions) parts.push(instructions);
     return parts.join(" - ");
   }
 

@@ -12,6 +12,11 @@ import {
   Image,
   Alert,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import {
+  MEDICAL_DOSING_INSTRUCTIONS,
+  getDosingInstructionDisplay,
+} from "../utils/MedicalDosingInstructions";
 
 export default function MedicationForm({
   visible,
@@ -26,7 +31,9 @@ export default function MedicationForm({
       genericName: "",
       manufacturer: "",
       doseSize: "",
+      dosingInstructionsType: "",
       dosingInstructions: "",
+      customDosingInstructions: "",
       rxNumber: "",
       prescriptionQuantity: "",
       pillImage: null,
@@ -41,7 +48,9 @@ export default function MedicationForm({
         genericName: "",
         manufacturer: "",
         doseSize: "",
+        dosingInstructionsType: "",
         dosingInstructions: "",
+        customDosingInstructions: "",
         rxNumber: "",
         prescriptionQuantity: "",
         pillImage: null,
@@ -70,29 +79,56 @@ export default function MedicationForm({
     // Required fields
     if (!form.drugName.trim()) newErrors.drugName = true;
     if (!form.doseSize.trim()) newErrors.doseSize = true;
-    if (!form.dosingInstructions.trim()) newErrors.dosingInstructions = true;
+
+    // Validate dosing instructions
+    if (!form.dosingInstructionsType) {
+      newErrors.dosingInstructions = true;
+    } else if (
+      form.dosingInstructionsType === "custom" &&
+      !form.customDosingInstructions.trim()
+    ) {
+      newErrors.customDosingInstructions = true;
+    }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
     // Save with trimmed values
-    onSave({
+    const saveData = {
       ...form,
       drugName: form.drugName.trim(),
       genericName: form.genericName.trim(),
       manufacturer: form.manufacturer.trim(),
       doseSize: form.doseSize.trim(),
-      dosingInstructions: form.dosingInstructions.trim(),
+      dosingInstructionsType: form.dosingInstructionsType,
       rxNumber: form.rxNumber.trim(),
       prescriptionQuantity: form.prescriptionQuantity.trim(),
-    });
+    };
+
+    // Set the appropriate dosing instructions based on type
+    if (form.dosingInstructionsType === "custom") {
+      saveData.dosingInstructions = "";
+      saveData.customDosingInstructions = form.customDosingInstructions.trim();
+    } else {
+      const selectedInstruction = MEDICAL_DOSING_INSTRUCTIONS.find(
+        (inst) => inst.value === form.dosingInstructionsType
+      );
+      saveData.dosingInstructions = selectedInstruction
+        ? getDosingInstructionDisplay(form.dosingInstructionsType)
+        : "";
+      saveData.customDosingInstructions = "";
+    }
+
+    onSave(saveData);
 
     setForm({
       drugName: "",
       genericName: "",
       manufacturer: "",
       doseSize: "",
+      dosingInstructionsType: "",
       dosingInstructions: "",
+      customDosingInstructions: "",
       rxNumber: "",
       prescriptionQuantity: "",
       pillImage: null,
@@ -152,18 +188,45 @@ export default function MedicationForm({
             keyboardType="default"
           />
 
-          <TextInput
+          <Text style={styles.label}>Dosing Instructions *</Text>
+          <View
             style={[
-              styles.input,
+              styles.pickerContainer,
               errors.dosingInstructions && styles.inputError,
             ]}
-            placeholder="Dosing Instructions (e.g., Take twice daily)*"
-            value={form.dosingInstructions}
-            onChangeText={(v) => handleChange("dosingInstructions", v)}
-            keyboardType="default"
-            multiline
-            numberOfLines={2}
-          />
+          >
+            <Picker
+              selectedValue={form.dosingInstructionsType}
+              onValueChange={(value) =>
+                handleChange("dosingInstructionsType", value)
+              }
+              style={styles.picker}
+            >
+              <Picker.Item label="Select dosing instructions..." value="" />
+              {MEDICAL_DOSING_INSTRUCTIONS.map((instruction) => (
+                <Picker.Item
+                  key={instruction.value}
+                  label={`${instruction.label} (${instruction.abbreviation}) - ${instruction.description}`}
+                  value={instruction.value}
+                />
+              ))}
+            </Picker>
+          </View>
+
+          {form.dosingInstructionsType === "custom" && (
+            <TextInput
+              style={[
+                styles.input,
+                errors.customDosingInstructions && styles.inputError,
+              ]}
+              placeholder="Enter custom dosing instructions"
+              value={form.customDosingInstructions}
+              onChangeText={(v) => handleChange("customDosingInstructions", v)}
+              keyboardType="default"
+              multiline
+              numberOfLines={2}
+            />
+          )}
 
           <Text style={styles.sectionHeader}>Prescription Information</Text>
 
@@ -306,6 +369,23 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontSize: 16,
     fontWeight: "500",
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    marginBottom: 16,
+  },
+  picker: {
+    height: 50,
   },
   buttonContainer: {
     marginTop: 24,

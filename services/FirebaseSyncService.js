@@ -64,7 +64,7 @@ class FirebaseSyncService {
 
       for (const table of tables) {
         const data = await databaseService.getAll(table);
-        await this.syncTableToFirebase(table, data, userId);
+        await this.syncTableWithFirebase(table, data, userId);
       }
 
       console.log("Sync with Firebase completed successfully");
@@ -585,7 +585,7 @@ class FirebaseSyncService {
             );
             break;
           case "sync":
-            await this.syncTableToFirebase(
+            await this.syncTableWithFirebase(
               operation.tableName,
               operation.data,
               operation.userId
