@@ -1,5 +1,11 @@
 /**
- * Firebase Sync Service
+ * Firebase Sync Se      if (!wasOnline && this.isOnline) {
+        console.log('Network restored, running intelligent sync and processing pending operations...');
+        // Run intelligent sync first to merge all data
+        this.triggerIntelligentSyncOnReconnect();
+        // Then process any pending operations
+        this.syncPendingOperations();
+      }e
  * ACS5413 - Personal Health Management
  * Dewayne Hafenstein - HAFE0010
  *
@@ -74,6 +80,223 @@ class FirebaseSyncService {
       throw error;
     } finally {
       this.syncInProgress = false;
+    }
+  }
+
+  /**
+   * Intelligent bidirectional sync - preserves data on both sides
+   * Loads Firebase data that doesn't exist locally, uploads local data that doesn't exist in Firebase
+   */
+  async intelligentBidirectionalSync(databaseService, userId = "default") {
+    if (!this.isOnline || this.syncInProgress) {
+      console.log("Sync skipped: offline or sync in progress");
+      return;
+    }
+
+    this.syncInProgress = true;
+
+    try {
+      console.log("Starting intelligent bidirectional sync...");
+
+      const tables = [
+        "contacts",
+        "doctors",
+        "hospitals",
+        "pharmacies",
+        "medications",
+        "insurance",
+        "allergies",
+        "medical_history",
+      ];
+
+      for (const table of tables) {
+        await this.intelligentSyncTable(table, databaseService, userId);
+      }
+
+      console.log("Intelligent bidirectional sync completed successfully");
+    } catch (error) {
+      console.error("Error during intelligent sync:", error);
+      throw error;
+    } finally {
+      this.syncInProgress = false;
+    }
+  }
+
+  /**
+   * Intelligent sync for a specific table - merges data from both sources
+   */
+  async intelligentSyncTable(tableName, databaseService, userId = "default") {
+    try {
+      console.log(`Starting intelligent sync for ${tableName}...`);
+
+      // Get data from both sources
+      const localData = await databaseService.getAll(tableName);
+      const firebaseData = await this.getFirebaseTableData(tableName, userId);
+
+      // Create maps for easier comparison
+      const localDataMap = {};
+      const firebaseDataMap = {};
+
+      localData.forEach((item) => {
+        localDataMap[item.id] = item;
+      });
+
+      Object.keys(firebaseData).forEach((id) => {
+        firebaseDataMap[id] = firebaseData[id];
+      });
+
+      // Find items that exist in Firebase but not locally
+      const firebaseOnlyItems = Object.keys(firebaseDataMap).filter(
+        (id) => !localDataMap[id]
+      );
+
+      // Find items that exist locally but not in Firebase
+      const localOnlyItems = Object.keys(localDataMap).filter(
+        (id) => !firebaseDataMap[id]
+      );
+
+      // Find items that exist in both (for conflict resolution)
+      const commonItems = Object.keys(localDataMap).filter(
+        (id) => firebaseDataMap[id]
+      );
+
+      console.log(`${tableName} sync analysis:`);
+      console.log(`- Firebase only: ${firebaseOnlyItems.length} items`);
+      console.log(`- Local only: ${localOnlyItems.length} items`);
+      console.log(`- Common items: ${commonItems.length} items`);
+
+      // 1. Add Firebase-only items to local database
+      for (const id of firebaseOnlyItems) {
+        try {
+          const firebaseItem = firebaseDataMap[id];
+          console.log(`Adding Firebase item to local: ${tableName}/${id}`);
+          await this.insertToLocal(tableName, firebaseItem, databaseService);
+        } catch (error) {
+          console.error(
+            `Error adding Firebase item to local (${tableName}/${id}):`,
+            error
+          );
+        }
+      }
+
+      // 2. Add local-only items to Firebase
+      for (const id of localOnlyItems) {
+        try {
+          const localItem = localDataMap[id];
+          console.log(`Adding local item to Firebase: ${tableName}/${id}`);
+          await this.syncItemToFirebase(tableName, localItem, userId);
+        } catch (error) {
+          console.error(
+            `Error adding local item to Firebase (${tableName}/${id}):`,
+            error
+          );
+        }
+      }
+
+      // 3. Resolve conflicts for common items (use most recent timestamp)
+      for (const id of commonItems) {
+        try {
+          const localItem = localDataMap[id];
+          const firebaseItem = firebaseDataMap[id];
+
+          await this.resolveConflict(
+            tableName,
+            id,
+            localItem,
+            firebaseItem,
+            databaseService,
+            userId
+          );
+        } catch (error) {
+          console.error(
+            `Error resolving conflict for ${tableName}/${id}:`,
+            error
+          );
+        }
+      }
+
+      console.log(`Intelligent sync completed for ${tableName}`);
+    } catch (error) {
+      console.error(`Error during intelligent sync for ${tableName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get table data from Firebase
+   */
+  async getFirebaseTableData(tableName, userId = "default") {
+    try {
+      const tableRef = ref(database, `users/${userId}/${tableName}`);
+      const snapshot = await get(tableRef);
+
+      if (snapshot.exists()) {
+        return snapshot.val();
+      } else {
+        return {};
+      }
+    } catch (error) {
+      console.error(`Error getting Firebase data for ${tableName}:`, error);
+      return {};
+    }
+  }
+
+  /**
+   * Resolve conflicts between local and Firebase data
+   */
+  async resolveConflict(
+    tableName,
+    id,
+    localItem,
+    firebaseItem,
+    databaseService,
+    userId = "default"
+  ) {
+    try {
+      // Get timestamps for comparison
+      const localTimestamp = this.getItemTimestamp(localItem);
+      const firebaseTimestamp = this.getItemTimestamp(firebaseItem);
+
+      console.log(`Resolving conflict for ${tableName}/${id}:`);
+      console.log(`- Local timestamp: ${localTimestamp}`);
+      console.log(`- Firebase timestamp: ${firebaseTimestamp}`);
+
+      if (firebaseTimestamp > localTimestamp) {
+        // Firebase version is newer, update local
+        console.log(
+          `Firebase version is newer, updating local ${tableName}/${id}`
+        );
+        await this.updateLocal(tableName, id, firebaseItem, databaseService);
+      } else if (localTimestamp > firebaseTimestamp) {
+        // Local version is newer, update Firebase
+        console.log(
+          `Local version is newer, updating Firebase ${tableName}/${id}`
+        );
+        await this.syncItemToFirebase(tableName, localItem, userId);
+      } else {
+        // Same timestamp, no action needed
+        console.log(`Same timestamp for ${tableName}/${id}, no action needed`);
+      }
+    } catch (error) {
+      console.error(`Error resolving conflict for ${tableName}/${id}:`, error);
+    }
+  }
+
+  /**
+   * Get timestamp from item for comparison
+   */
+  getItemTimestamp(item) {
+    // Priority: updatedAt > lastSyncedAt > createdAt > 0
+    if (item.updatedAt) {
+      return new Date(item.updatedAt).getTime();
+    } else if (item.lastSyncedAt) {
+      return new Date(item.lastSyncedAt).getTime();
+    } else if (item.createdAt) {
+      return new Date(item.createdAt).getTime();
+    } else if (item.created_at) {
+      return new Date(item.created_at).getTime();
+    } else {
+      return 0; // Fallback for items without timestamps
     }
   }
 
@@ -195,20 +418,44 @@ class FirebaseSyncService {
   }
 
   /**
-   * Insert item to local database
+   * Insert item to local database (or update if it already exists)
    */
   async insertToLocal(tableName, item, databaseService) {
     try {
-      const methodName = `add${
-        tableName.charAt(0).toUpperCase() + tableName.slice(1, -1)
-      }`;
-      if (typeof databaseService[methodName] === "function") {
-        await databaseService[methodName](item);
+      // First check if the item already exists locally
+      const existingItem = await databaseService.getById(tableName, item.id);
+
+      if (existingItem) {
+        // Item already exists, update instead of insert
+        console.log(
+          `Item ${item.id} already exists locally, updating instead of inserting`
+        );
+        await this.updateLocal(tableName, item.id, item, databaseService);
       } else {
-        await databaseService.insert(tableName, item);
+        // Item doesn't exist, safe to insert
+        const methodName = `add${
+          tableName.charAt(0).toUpperCase() + tableName.slice(1, -1)
+        }`;
+        if (typeof databaseService[methodName] === "function") {
+          await databaseService[methodName](item);
+        } else {
+          await databaseService.insert(tableName, item);
+        }
       }
     } catch (error) {
       console.error(`Error inserting ${tableName} item locally:`, error);
+      // If insert fails, try update as fallback
+      try {
+        console.log(
+          `Insert failed, trying update as fallback for ${tableName}/${item.id}`
+        );
+        await this.updateLocal(tableName, item.id, item, databaseService);
+      } catch (updateError) {
+        console.error(
+          `Update fallback also failed for ${tableName}/${item.id}:`,
+          updateError
+        );
+      }
     }
   }
 
@@ -282,6 +529,29 @@ class FirebaseSyncService {
       userId,
       timestamp: Date.now(),
     });
+  }
+
+  /**
+   * Trigger intelligent sync when connection is restored
+   * This ensures data is properly merged after being offline
+   */
+  async triggerIntelligentSyncOnReconnect() {
+    // This will be called by external services that have access to DatabaseService
+    // For now, we'll emit an event or use a callback mechanism
+    if (this.onReconnectCallback) {
+      try {
+        await this.onReconnectCallback();
+      } catch (error) {
+        console.error("Error during reconnect sync:", error);
+      }
+    }
+  }
+
+  /**
+   * Set callback for when connection is restored
+   */
+  setReconnectCallback(callback) {
+    this.onReconnectCallback = callback;
   }
 
   /**

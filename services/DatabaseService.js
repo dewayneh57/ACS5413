@@ -25,6 +25,15 @@ class DatabaseService {
       // Create tables if they don't exist
       await this.createTables();
 
+      // Set up reconnect callback for intelligent sync
+      firebaseSyncService.setReconnectCallback(async () => {
+        console.log("Running intelligent sync after reconnection...");
+        await firebaseSyncService.intelligentBidirectionalSync(
+          this,
+          this.userId
+        );
+      });
+
       // Check Firebase connectivity and sync if online
       await this.initializeFirebaseSync();
 
@@ -36,25 +45,25 @@ class DatabaseService {
   }
 
   /**
-   * Initialize Firebase sync
+   * Initialize Firebase sync with intelligent bidirectional merging
    */
   async initializeFirebaseSync() {
     try {
       const isOnline = await firebaseSyncService.checkConnection();
 
       if (isOnline) {
-        console.log("Online - setting up Firebase sync...");
+        console.log("Online - setting up intelligent Firebase sync...");
 
-        // Sync local data to Firebase first
-        await firebaseSyncService.syncToFirebase(this, this.userId);
-
-        // Then sync any newer data from Firebase
-        await firebaseSyncService.syncFromFirebase(this, this.userId);
+        // Use intelligent bidirectional sync that preserves data on both sides
+        await firebaseSyncService.intelligentBidirectionalSync(
+          this,
+          this.userId
+        );
 
         // Set up real-time listeners
         firebaseSyncService.setupRealtimeSync(this, this.userId);
 
-        console.log("Firebase sync initialized");
+        console.log("Intelligent Firebase sync initialized");
       } else {
         console.log(
           "Offline - Firebase sync will activate when connection is restored"
@@ -67,7 +76,7 @@ class DatabaseService {
   }
 
   /**
-   * Manual sync trigger
+   * Manual sync trigger with intelligent bidirectional merging
    */
   async syncWithFirebase() {
     try {
@@ -78,13 +87,13 @@ class DatabaseService {
         return { success: false, message: "Device is offline" };
       }
 
-      // Sync to Firebase first
-      await firebaseSyncService.syncToFirebase(this, this.userId);
+      // Use intelligent bidirectional sync
+      await firebaseSyncService.intelligentBidirectionalSync(this, this.userId);
 
-      // Then sync from Firebase
-      await firebaseSyncService.syncFromFirebase(this, this.userId);
-
-      return { success: true, message: "Sync completed successfully" };
+      return {
+        success: true,
+        message: "Intelligent sync completed successfully",
+      };
     } catch (error) {
       console.error("Error during manual sync:", error);
       return { success: false, message: error.message };
