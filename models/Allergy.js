@@ -7,6 +7,8 @@ export default class Allergy {
       severity = "",
       remediation = "",
       description = "",
+      createdAt = "",
+      updatedAt = "",
     } = props;
 
     this.id =
@@ -15,6 +17,8 @@ export default class Allergy {
     this.severity = severity;
     this.remediation = remediation;
     this.description = description;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   getDisplayName() {

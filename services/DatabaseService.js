@@ -141,6 +141,8 @@ class DatabaseService {
         email TEXT,
         notes TEXT,
         relationship TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -157,6 +159,8 @@ class DatabaseService {
         state TEXT,
         zip TEXT,
         phone TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -171,6 +175,8 @@ class DatabaseService {
         zip TEXT,
         phone TEXT,
         inNetwork INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -185,6 +191,8 @@ class DatabaseService {
         zip TEXT,
         phone TEXT,
         inNetwork INTEGER DEFAULT 0,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -199,6 +207,8 @@ class DatabaseService {
         rxNumber TEXT,
         prescriptionQuantity TEXT,
         pillImage TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -221,6 +231,8 @@ class DatabaseService {
         additionalPhone1Type TEXT,
         additionalPhone2 TEXT,
         additionalPhone2Type TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
@@ -231,6 +243,8 @@ class DatabaseService {
         severity TEXT,
         remediation TEXT,
         description TEXT,
+        createdAt TEXT,
+        updatedAt TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 

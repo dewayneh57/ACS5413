@@ -11,6 +11,8 @@ export default class Medication {
       rxNumber = "",
       prescriptionQuantity = "",
       pillImage = null, // URI or require path for pill image
+      createdAt = "",
+      updatedAt = "",
     } = props;
 
     this.id =
@@ -23,6 +25,8 @@ export default class Medication {
     this.rxNumber = rxNumber;
     this.prescriptionQuantity = prescriptionQuantity;
     this.pillImage = pillImage;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   getDisplayName() {
