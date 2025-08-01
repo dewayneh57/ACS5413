@@ -21,3 +21,7 @@ identify the medication.
 
 The application also includes local notifications when it is time to take certain 
 prescriptions as a reminder to the user. 
+
+The application uses an internal SQLite database to store all the persistent data, 
+and synchronizes it with Firebase when online.  This allows the information to be 
+entered, updated, and referenced even when the device is not connected to a network. 
